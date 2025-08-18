@@ -1,13 +1,30 @@
-import app from './app.js';
-import { config } from './config.js';
-import { ping } from './db.js';
+import express from 'express';
+import {config} from './config.js';
 
-const start = async () => {
-  const ok = await ping();
-  if (!ok) {
-    console.error('DB ping failed');
-    process.exit(1);
-  }
-  app.listen(config.port, () => console.log(`Listening on ${config.port}`));
-};
-start();
+const PORT= config.PORT;
+
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
+app.post('/login', (req, res) => {
+  res.send('Login endpoint');
+});
+
+app.post('/register', (req, res) => {
+  res.send('Register endpoint');
+});
+app.post('/logout', (req, res) => {
+  res.send('Logout endpoint');
+});
+
+app.post('/protected', (req, res) => {
+  res.send('Register endpoint');
+});
+
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
