@@ -1,16 +1,12 @@
-import mysql from 'mysql2/promise';
+import { createPool } from "mysql2/promise";
+import { DB_DATABASE, DB_HOST, DB_PASS, DB_PORT, DB_USER } from "./config.js";
 
-export const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT ?? 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10
+export const pool = createPool({
+  host: DB_HOST,
+  user: DB_USER,
+  password: DB_PASS,
+  port: DB_PORT,
+  database: DB_DATABASE,
 });
 
-export async function query(sql, params) {
-  const [rows] = await pool.execute(sql, params);
-  return rows;
-}
+export default pool;
