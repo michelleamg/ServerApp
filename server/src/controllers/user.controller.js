@@ -1,18 +1,24 @@
+import { pool } from "../db.js";
 import bcrypt from "bcrypt";
 
 // Actualizar nombre de usuario
 export const updateUsername = async (req, res) => {
   try {
     const { id, newUsername } = req.body;
-    console.log(req.body.username);
-    await pool.query("UPDATE users SET username = ? WHERE id = ?", [
-      req.body.username,
-      id,
-    ]);
+    if (!id || !newUsername) {
+      return res.status(400).json({ message: "Faltan campos (id, newUsername)" });
+    }
 
-    return res
-      .status(200)
-      .json({ message: "Nombre de usuario actualizado correctamente" });
+    const [result] = await pool.query(
+      "UPDATE users SET username = ? WHERE id = ?",
+      [newUsername, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Nombre de usuario actualizado correctamente" });
   } catch (error) {
     console.error("Error al actualizar el nombre de usuario:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
@@ -21,35 +27,28 @@ export const updateUsername = async (req, res) => {
 
 // Actualizar correo electrónico
 export const updateEmail = async (req, res) => {
-  const { id, newEmail } = req.body;
-
-  if (!id || !newEmail) {
-    return res
-      .status(400)
-      .json({ message: "Faltan campos requeridos (id, correo)" });
-  }
-
   try {
-    const user = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+    const { id, newEmail } = req.body;
+    if (!id || !newEmail) {
+      return res.status(400).json({ message: "Faltan campos (id, newEmail)" });
+    }
 
-    if (user.rowCount === 0) {
+    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [id]);
+    if (users.length === 0) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const emailExists = await pool.query(
-      "SELECT * FROM users WHERE email = ?",
-      [newEmail]
-    );
-
-    if (emailExists.rowCount > 0) {
+    const [dup] = await pool.query("SELECT id FROM users WHERE email = ?", [newEmail]);
+    if (dup.length > 0) {
       return res.status(409).json({ message: "El correo ya está en uso" });
     }
 
-    await pool.query("UPDATE users SET email = ? WHERE id = ?", [newEmail, id]);
+    const [result] = await pool.query("UPDATE users SET email = ? WHERE id = ?", [newEmail, id]);
+    if (result.affectedRows === 0) {
+      return res.status(500).json({ message: "No se pudo actualizar el correo" });
+    }
 
-    return res
-      .status(200)
-      .json({ message: "Correo actualizado correctamente" });
+    return res.status(200).json({ message: "Correo actualizado correctamente" });
   } catch (error) {
     console.error("Error al actualizar el correo:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
@@ -58,31 +57,28 @@ export const updateEmail = async (req, res) => {
 
 // Actualizar contraseña
 export const updatePassword = async (req, res) => {
-  const { id, newPassword } = req.body;
-
-  if (!id || !newPassword) {
-    return res
-      .status(400)
-      .json({ message: "Faltan campos requeridos (id, contraseña)" });
-  }
-
   try {
-    const user = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+    const { id, newPassword } = req.body;
+    if (!id || !newPassword) {
+      return res.status(400).json({ message: "Faltan campos (id, newPassword)" });
+    }
 
-    if (user.rowCount === 0) {
+    const [users] = await pool.query("SELECT id FROM users WHERE id = ?", [id]);
+    if (users.length === 0) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const [result] = await pool.query(
+      "UPDATE users SET user_password = ? WHERE id = ?",
+      [hashedPassword, id]
+    );
 
-    await pool.query("UPDATE users SET user_password = ? WHERE id = ?", [
-      hashedPassword,
-      id,
-    ]);
+    if (result.affectedRows === 0) {
+      return res.status(500).json({ message: "No se pudo actualizar la contraseña" });
+    }
 
-    return res
-      .status(200)
-      .json({ message: "Contraseña actualizada correctamente" });
+    return res.status(200).json({ message: "Contraseña actualizada correctamente" });
   } catch (error) {
     console.error("Error al actualizar la contraseña:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
@@ -93,16 +89,19 @@ export const updatePassword = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const { email } = req.body;
-    const result = await pool.query("DELETE FROM users WHERE email = ?", [
-      email,
-    ]);
+    if (!email) {
+      return res.status(400).json({ message: "Falta el campo email" });
+    }
 
-    if (result.rowCount === 0) {
+    const [result] = await pool.query("DELETE FROM users WHERE email = ?", [email]);
+    if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
     res.status(200).json({ message: "Usuario eliminado exitosamente" });
   } catch (error) {
-    res.status(500).json({ message: "Error al eliminar usuario", error });
+    console.error("Error al eliminar usuario:", error);
+    res.status(500).json({ message: "Error al eliminar usuario" });
   }
 };
+// Obtener información del usuario
