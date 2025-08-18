@@ -1,8 +1,6 @@
-import { Router } from "express";
-import { pong } from "../controllers/index.controller.js";
+// src/index.routes.js (solo paciente)
+import { Router } from 'express';
+import { router as pacienteAuthRouter } from './paciente.auth.routes.js';
 
-const router = Router();
-
-router.get("/ping", pong);
-
-export default router;
+export const router = Router();
+router.use('/auth/paciente', pacienteAuthRouter);

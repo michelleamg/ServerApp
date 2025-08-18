@@ -1,5 +1,13 @@
-import app from "./app.js";
-import { PORT } from "./config.js";
+import app from './app.js';
+import { config } from './config.js';
+import { ping } from './db.js';
 
-app.listen(PORT);
-console.log("Server running on port " + PORT);
+const start = async () => {
+  const ok = await ping();
+  if (!ok) {
+    console.error('DB ping failed');
+    process.exit(1);
+  }
+  app.listen(config.port, () => console.log(`Listening on ${config.port}`));
+};
+start();
