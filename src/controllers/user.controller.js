@@ -90,20 +90,3 @@ export const updatePassword = async (req, res) => {
   }
 };
 
-// Eliminar usuario
-export const deleteUser = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const result = await pool.query("DELETE FROM users WHERE email = ?", [
-      email,
-    ]);
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-
-    res.status(200).json({ message: "Usuario eliminado exitosamente" });
-  } catch (error) {
-    res.status(500).json({ message: "Error al eliminar usuario", error });
-  }
-};
