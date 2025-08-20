@@ -1,10 +1,17 @@
+import create from 'zustand';
+
 export interface User {
-    id: string;
+    id: number;
     email: string;
     name: string;
     isActive: boolean;
-    user?: User;
+}
 
+// Define AuthState type
+export interface AuthState {
+    status: 'checking' | 'authenticated' | 'unauthenticated';
+    token?: string;
+    user?: User;
     login: (email: string, password: string) => Promise<boolean>;
     checkStatus: () => Promise<void>;
     logout: () => Promise<void>;
@@ -25,3 +32,7 @@ export const useAuthStore = create<AuthState>()( (set) => ({
 
     },
 }));
+// Import Zustand's create function for store creation
+
+
+
