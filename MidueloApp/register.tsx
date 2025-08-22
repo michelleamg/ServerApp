@@ -26,7 +26,7 @@ export default function App() {
         <Text style={styles.formText}>Registro de Paciente</Text>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/name.png')} style={styles.inputIcon} />
+          <Image source={require('./assets/email.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Nombre' 
@@ -52,7 +52,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/birthday.png')} style={styles.inputIcon} />
+          <Image source={require('./assets/duelingo.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Fecha de Nacimiento' 
@@ -61,7 +61,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/location.png')} style={styles.inputIcon} />
+          <Image source={require('./assets/duelingo.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Ciudad' 
