@@ -5,7 +5,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Image 
-        source={require('./assets/duelofondo.png')}  
+        source={require('C:\\Users\\HP\\OneDrive\\Documentos\\TT\\Aplicacion-Movil-MyDuelo\\MidueloApp\\assets\\duelofondo.png')}  
         style={styles.imageBackground}
       />
 
@@ -13,7 +13,7 @@ export default function App() {
         <Text style={styles.welcomeText}>¡Bienvenido!</Text>
         <View style={styles.logoWrapper}>
           <Image
-            source={require('./assets/duelingo.png')}
+            source={require('../../../assets/duelingo.png')}
             style={styles.logoimage}
           />
         </View>
@@ -26,7 +26,7 @@ export default function App() {
         <Text style={styles.formText}>Registro de Paciente</Text>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/email.png')} style={styles.inputIcon} />
+          <Image source={require('../../../assets/email.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Nombre' 
@@ -34,7 +34,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/email.png')} style={styles.inputIcon} />
+          <Image source={require('../../../assets/email.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Correo Electrónico' 
@@ -43,7 +43,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/password.png')} style={styles.inputIcon} />
+          <Image source={require('../../../assets/password.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Contraseña' 
@@ -52,7 +52,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/duelingo.png')} style={styles.inputIcon} />
+          <Image source={require('../../../assets/duelingo.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Fecha de Nacimiento' 
@@ -61,7 +61,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('./assets/duelingo.png')} style={styles.inputIcon} />
+          <Image source={require('../../../assets/duelingo.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Ciudad' 
