@@ -14,14 +14,14 @@ const Stack = createStackNavigator<RootStackParamList>();
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen 
-          name="Home" 
-          component={HomeScreen} 
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
         />
-        <Stack.Screen 
-          name="Register" 
-          component={Register} 
+        <Stack.Screen
+          name="Register"
+          component={Register}
         />
       </Stack.Navigator>
     </NavigationContainer>

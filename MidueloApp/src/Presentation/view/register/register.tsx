@@ -14,19 +14,7 @@ export default function App() {
         style={styles.imageBackground}
       />
 
-      <View style={styles.logocontainer}>
-        <Text style={styles.welcomeText}>¡Bienvenido!</Text>
-        <View style={styles.logoWrapper}>
-          <Image
-            source={require('../../../../assets/duelingo.png')}
-            style={styles.logoimage}
-          />
-        </View>
-        
-        {/* "Mi Duelo" en negro y centrado */}
-        <Text style={styles.appNameText}>Mi Duelo</Text>
-      </View>
-
+  
       <View style={styles.form}>
         <Text style={styles.formText}>Registro de Paciente</Text>
 
@@ -55,16 +43,6 @@ export default function App() {
             secureTextEntry={true} // Para ocultar la contraseña
           />
         </View>
-
-        <View style={styles.inputContainer}>
-          <Image source={require('../../../../assets/duelingo.png')} style={styles.inputIcon} />
-          <TextInput 
-            style={styles.textInput} 
-            placeholder='Fecha de Nacimiento' 
-            keyboardType='default'
-          />
-        </View>
-
         <View style={styles.inputContainer}>
           <Image source={require('../../../../assets/duelingo.png')} style={styles.inputIcon} />
           <TextInput 
@@ -96,54 +74,26 @@ const styles = StyleSheet.create({
   imageBackground: {
     width: '100%',
     height: '100%',
-    opacity: 0.6,
+ 
   },
   form: {
     width: '90%',
     maxWidth: 350,
-    height: '60%',
-    backgroundColor: 'white',
+    height: '100%',
+    backgroundColor: '#ffffffff',
     position: 'absolute',
-    bottom: 0,
     alignSelf: 'center',
     padding: 20,
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
-    borderWidth: 2,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    justifyContent: 'center', 
+    opacity: 0.9,
+
+
   },
-  logocontainer: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '15%',
-    textAlign: 'center',
-  },
-  welcomeText: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: 'black',
-    fontFamily: 'sans-serif',
-    marginBottom: 10,
-  },
-  logoWrapper: {
-    borderWidth: 5,
-    borderColor: '#234fa7ff',
-    borderRadius: 100,
-    padding: 10,
-    marginBottom: 10,
-    alignSelf: 'center',
-  },
-  logoimage: {
-    width: 150,
-    height: 150,
-  },
-  appNameText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: 'black',
-    fontFamily: 'sans-serif',
-    left: '25%',
-    marginTop: 10,
-  },
+
   formText: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -182,11 +132,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+
   },
   loginContainer: {
+    marginTop: 40,
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 15,
+
   },
   loginText: {
     fontSize: 14,
@@ -194,7 +146,9 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     fontSize: 14,
+    textDecorationLine: 'underline',
     color: '#4CAF50',
     fontWeight: 'bold',
+
   },
 });

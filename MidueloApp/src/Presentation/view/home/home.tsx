@@ -15,22 +15,9 @@ export const HomeScreen = () => {
   return (
     <View style={styles.container}>
       <Image 
-        source={require('../../../../assets/duelofondo.png')}  
+        source={require('../../../../assets/MiDueloFondo.png')}  
         style={styles.imageBackground}
       />
-
-      <View style={styles.logocontainer}>
-        <Text style={styles.welcomeText}>¡BIENVENIDO!</Text>
-        <View style={styles.logoWrapper}>
-          <Image
-            source={require('../../../../assets/duelingo.png')}
-            style={styles.logoimage}
-          />
-        </View>
-        
-        {/* "Mi Duelo" en negro y centrado */}
-        <Text style={styles.appNameText}>Mi Duelo</Text>
-      </View>
   
 
       <View style={styles.form}>
@@ -84,7 +71,6 @@ const styles = StyleSheet.create({
   imageBackground: {
     width: '100%',
     height: '100%',
-    opacity: 0.6,
   },
   form: {
     width: '90%',
@@ -97,42 +83,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
-    borderWidth: 2, // Borde alrededor del formulario
-    //borderBottomLeftRadius: 40,
-    //borderBottomRightRadius: 40,
-  },
-  logocontainer: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '15%',
-    textAlign: 'center',
-  },
-  welcomeText: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: 'black',
-    fontFamily: 'sans-serif',
-    marginBottom: 10,
-  },
-  logoWrapper: {
-    borderWidth: 5,
-    borderColor: '#234fa7ff',
-    borderRadius: 100,
-    padding: 10,
-    marginBottom: 10,
-    alignSelf: 'center',
-  },
-  logoimage: {
-    width: 150,
-    height: 150,
-  },
-  appNameText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: 'black', // Negro para el texto
-    fontFamily: 'sans-serif',
-    left:'25%',
-    marginTop: 10, // Espacio entre el logo y el texto
+
   },
   formText: {
     fontSize: 18,
