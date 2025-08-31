@@ -1,28 +1,27 @@
+// app.js
 import express from "express";
 import cors from "cors";
 import morgan from "morgan"; 
+// importa tus rutas
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
-import userRoutes from './routes/user.routes.js'
 
-const app = express();
-app.use(morgan('dev'));
-app.use(cors());
+
+const app = express(); // inicializar app
+
+// Middlewares
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.disable('x-powered-by'); 
+app.use(cors());
+app.disable("x-powered-by"); 
 
+// Rutas
 app.use(indexRoutes);
 app.use(authRoutes);
-app.use(userRoutes);
+//app.use(userRoutes);
 
-
-app.use ((err, req, res, next)=>{
-    console.log(err);
-    res.status(err.status|| 500).send(err.stack); 
-
-} );
-
+// Manejo de errores
 
 
 export default app;

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { pong } from "../controllers/index.controller.js";
+import { pong } from "../controllers/indexController.js";
 
 const router = Router();
 
