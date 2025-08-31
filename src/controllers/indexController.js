@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../db/db.js";
 
 export const pong = async (req, res) => {
   const result = await pool.query("SELECT 'pong' AS result");
