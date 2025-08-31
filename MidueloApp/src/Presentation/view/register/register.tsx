@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../../App'; // Asegúrate de que la ruta es correcta
 export default function App() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
