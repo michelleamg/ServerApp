@@ -1,10 +1,15 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import Home from './src/view/home/home';
-import Register from './src/view/register/register';
+import {HomeScreen} from './src/Presentation/view/home/home';
+import Register from './src/Presentation/view/register/register';
 
-const Stack = createStackNavigator();
+export type RootStackParamList = {
+  Home: undefined;
+  Register: undefined;
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 const App = () => {
   return (
@@ -12,13 +17,11 @@ const App = () => {
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen 
           name="Home" 
-          component={Home} 
-          options={{ title: 'Bienvenido' }}
+          component={HomeScreen} 
         />
         <Stack.Screen 
           name="Register" 
           component={Register} 
-          options={{ title: 'Registro' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

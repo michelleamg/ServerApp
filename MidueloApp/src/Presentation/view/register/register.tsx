@@ -1,11 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../../App';
 
 export default function App() {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
   return (
     <View style={styles.container}>
       <Image 
-        source={require('C:\\Users\\HP\\OneDrive\\Documentos\\TT\\Aplicacion-Movil-MyDuelo\\MidueloApp\\assets\\duelofondo.png')}  
+        source={require('../../../../assets/duelofondo.png')}  
         style={styles.imageBackground}
       />
 
@@ -13,7 +18,7 @@ export default function App() {
         <Text style={styles.welcomeText}>¡Bienvenido!</Text>
         <View style={styles.logoWrapper}>
           <Image
-            source={require('../../../assets/duelingo.png')}
+            source={require('../../../../assets/duelingo.png')}
             style={styles.logoimage}
           />
         </View>
@@ -26,7 +31,7 @@ export default function App() {
         <Text style={styles.formText}>Registro de Paciente</Text>
 
         <View style={styles.inputContainer}>
-          <Image source={require('../../../assets/email.png')} style={styles.inputIcon} />
+          <Image source={require('../../../../assets/email.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Nombre' 
@@ -34,7 +39,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('../../../assets/email.png')} style={styles.inputIcon} />
+          <Image source={require('../../../../assets/email.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Correo Electrónico' 
@@ -43,7 +48,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('../../../assets/password.png')} style={styles.inputIcon} />
+          <Image source={require('../../../../assets/password.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Contraseña' 
@@ -52,7 +57,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('../../../assets/duelingo.png')} style={styles.inputIcon} />
+          <Image source={require('../../../../assets/duelingo.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Fecha de Nacimiento' 
@@ -61,7 +66,7 @@ export default function App() {
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('../../../assets/duelingo.png')} style={styles.inputIcon} />
+          <Image source={require('../../../../assets/duelingo.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Ciudad' 
@@ -74,7 +79,7 @@ export default function App() {
 
         <View style={styles.loginContainer}>
           <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Home')}>
             <Text style={styles.loginLink}>Iniciar sesión</Text>
           </TouchableOpacity>
         </View>

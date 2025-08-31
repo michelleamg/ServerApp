@@ -1,11 +1,21 @@
-import { StatusBar } from 'expo-status-bar';
+import React, {use, useState} from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity } from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../../App';
+import useViewModel from './ViewModel';
 
-export default function App() {
+
+
+export const HomeScreen = () => {
+  const { email, password, onChange } = useViewModel();
+
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+ 
   return (
     <View style={styles.container}>
       <Image 
-        source={require('../../../assets/duelofondo.png')}  
+        source={require('../../../../assets/duelofondo.png')}  
         style={styles.imageBackground}
       />
 
@@ -13,7 +23,7 @@ export default function App() {
         <Text style={styles.welcomeText}>¡BIENVENIDO!</Text>
         <View style={styles.logoWrapper}>
           <Image
-            source={require('../../../assets/duelingo.png')}
+            source={require('../../../../assets/duelingo.png')}
             style={styles.logoimage}
           />
         </View>
@@ -27,30 +37,37 @@ export default function App() {
         <Text style={styles.formText}> Ingresar </Text>
         
         <View style={styles.inputContainer}>
-          <Image source={require('../../../assets/email.png')} style={styles.inputIcon} />
+          <Image source={require('../../../../assets/email.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Correo Electrónico' 
-            keyboardType='email-address' 
+            keyboardType='email-address'
+            value={email}
+            onChangeText={text => onChange('email', text)}
           />
         </View>
 
         <View style={styles.inputContainer}>
-          <Image source={require('../../../assets/password.png')} style={styles.inputIcon} />
+          <Image source={require('../../../../assets/password.png')} style={styles.inputIcon} />
           <TextInput 
             style={styles.textInput} 
             placeholder='Contraseña' 
             secureTextEntry={true} // Para ocultar la contraseña
+            value={password}
+            onChangeText={text => onChange('password', text)}
           />
-        </View>
+        </View> 
 
-        <TouchableOpacity style={styles.loginButton}>
+        <TouchableOpacity style={styles.loginButton} onPress={() => {
+          console.log('Email:', email);
+          console.log('Password:', password);
+        }}>
           <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
         </TouchableOpacity>
 
         <View style={styles.registerContainer}>
           <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <Text style={styles.registerLink}>Regístrate</Text>
           </TouchableOpacity>
         </View>
