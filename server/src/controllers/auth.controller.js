@@ -5,7 +5,7 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
   bcrypt.hash(password, 10);
   try {
-    const [rows] = await pool.query("SELECT * FROM Users WHERE email = ?", [
+    const [rows] = await pool.query("SELECT * FROM patient WHERE email = ?", [
       email,
     ]);
     console.log(rows);
