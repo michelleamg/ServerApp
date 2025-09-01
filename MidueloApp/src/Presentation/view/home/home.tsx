@@ -15,18 +15,25 @@ import useViewModel from "./ViewModel";
 
 export const HomeScreen = () => {
   const { email, password, onChange, login } = useViewModel();
-
-  const navigation =
-    useNavigation<StackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleLogin = async () => {
+    // 🚨 Validación local antes de ir al servidor
+    if (!email || !password) {
+      Alert.alert("Error", "Debes ingresar correo y contraseña");
+      return;
+    }
+
     try {
-      const data = await login(); // Llamamos al backend
+      const data = await login(); // ✅ Solo se llama cuando presiona el botón
       if (data) {
-        navigation.navigate("Welcome"); // ✅ Navega solo si login correcto
+        navigation.navigate("Welcome");
+      } else {
+        Alert.alert("Error", "Credenciales inválidas");
       }
-    } catch (err) {
-      Alert.alert("Error", "Credenciales inválidas o servidor no disponible");
+    } catch (error) {
+      console.error("❌ Error en login:", error);
+      Alert.alert("Error", "Servidor no disponible o conexión fallida");
     }
   };
 
@@ -38,7 +45,7 @@ export const HomeScreen = () => {
       />
 
       <View style={styles.form}>
-        <Text style={styles.formText}> Ingresar </Text>
+        <Text style={styles.formText}>Ingresar</Text>
 
         <View style={styles.inputContainer}>
           <Image
@@ -49,6 +56,7 @@ export const HomeScreen = () => {
             style={styles.textInput}
             placeholder="Correo Electrónico"
             keyboardType="email-address"
+            autoCapitalize="none"
             value={email}
             onChangeText={(text) => onChange("email", text)}
           />
@@ -62,7 +70,7 @@ export const HomeScreen = () => {
           <TextInput
             style={styles.textInput}
             placeholder="Contraseña"
-            secureTextEntry={true}
+            secureTextEntry
             value={password}
             onChangeText={(text) => onChange("password", text)}
           />
@@ -133,3 +141,4 @@ const styles = StyleSheet.create({
   registerText: { fontSize: 14, color: "black" },
   registerLink: { fontSize: 14, color: "#4CAF50", fontWeight: "bold" },
 });
+export default HomeScreen;

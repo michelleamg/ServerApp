@@ -14,14 +14,7 @@ const HomeViewModel = () => {
       console.log("✅ Login successful:", response.data);
       return response.data;
     } catch (error) {
-      if (error instanceof Error) {
-        // If error is an AxiosError, it may have a 'response' property
-        const axiosError = error as any;
-        console.error("❌ Login failed:", axiosError.response?.data || error.message);
-      } else {
-        console.error("❌ Login failed:", error);
-      }
-      
+      console.error("❌ Login failed:", (error as any).response?.data || error);
       throw error;
     }
   };

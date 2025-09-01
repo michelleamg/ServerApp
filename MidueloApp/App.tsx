@@ -16,20 +16,12 @@ const Stack = createStackNavigator();
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-        />
-        <Stack.Screen
-          name="Register"
-          component={Register}
-        />
-        <Stack.Screen
-          name="Welcome"
-          component={WelcomeScreen}
-        />
-      </Stack.Navigator>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+  <Stack.Screen name="Home" component={HomeScreen} />
+  <Stack.Screen name="Register" component={Register} />
+  <Stack.Screen name="Welcome" component={WelcomeScreen} />
+</Stack.Navigator>
+
     </NavigationContainer>
   );
 };
