@@ -75,13 +75,6 @@ export const HomeScreen = () => {
           />
         </View>
 
-        <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>¿Olvidaste tu contraseña? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("recuperacioncontrasena")}>
-            <Text style={styles.registerLink}>Recuperar</Text>
-          </TouchableOpacity>
-        </View>
-
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
         </TouchableOpacity>
