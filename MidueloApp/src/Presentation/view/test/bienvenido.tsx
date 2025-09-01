@@ -1,24 +1,28 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 
 export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>👋 Bienvenido a MiDuelo</Text>
+      <Image 
+        source={require("../../../../assets/duelofondo.png")}  
+        style={styles.imageBackground}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center", // centra verticalmente
-    alignItems: "center",     // centra horizontalmente
-    backgroundColor: "#f9f9f9",
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#4A90E2", // azul suave
+
+  container: { 
+    flex: 1, 
+    backgroundColor: "#fff" },
+
+  imageBackground: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    top: 0,
+    left: 0,
   },
 });

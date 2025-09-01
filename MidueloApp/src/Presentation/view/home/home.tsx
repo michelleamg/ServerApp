@@ -18,12 +18,11 @@ export const HomeScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleLogin = async () => {
-    // 🚨 Validación local antes de ir al servidor
+    // Validación local antes de ir al servidor
     if (!email || !password) {
       Alert.alert("Error", "Debes ingresar correo y contraseña");
       return;
     }
-
     try {
       const data = await login(); // ✅ Solo se llama cuando presiona el botón
       if (data) {
@@ -74,6 +73,13 @@ export const HomeScreen = () => {
             value={password}
             onChangeText={(text) => onChange("password", text)}
           />
+        </View>
+
+        <View style={styles.registerContainer}>
+          <Text style={styles.registerText}>¿Olvidaste tu contraseña? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("recuperacioncontrasena")}>
+            <Text style={styles.registerLink}>Recuperar</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
