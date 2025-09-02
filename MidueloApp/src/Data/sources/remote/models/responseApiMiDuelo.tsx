@@ -1,5 +1,5 @@
 // Para LOGIN
-export interface LoginResponse {
+/*export interface LoginResponse {
   message: string;
   token: string;
   user: {
@@ -7,7 +7,7 @@ export interface LoginResponse {
     nombre: string;
     email: string;
   };
-}
+}*/
 
 // Para REGISTRO
 export interface RegisterResponse {
