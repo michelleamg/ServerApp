@@ -20,7 +20,7 @@ API_Miduelo.post("/register", {
   nombre: '',
   apellido_paterno: '',
   apellido_materno: '',
-  id_psicologo: '',
+  codigo_psicologo: '',
   telefono: '',
   email: '',
   password: ''
