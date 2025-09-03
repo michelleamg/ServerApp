@@ -14,6 +14,18 @@ User.findByEmail = async (email) => {
   return rows[0] || null;
 };
 
+// Consultar consentimientos del paciente
+User.findConsentimientos = async (id_paciente) => {
+  const sql = `
+    SELECT aviso_privacidad, terminos_condiciones
+    FROM consentimientos
+    WHERE id_paciente = ?
+    LIMIT 1
+  `;
+  const [rows] = await pool.query(sql, [id_paciente]);
+  return rows[0] || null;
+};
+
 // Crear paciente vinculado a psicólogo
 User.create = async (data) => {
   // buscar id_psicologo a partir del codigo_vinculacion
