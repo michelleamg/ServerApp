@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { API_Miduelo } from "../../../Data/sources/remote/api/ApiMiduelo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomeViewModel = () => {
   const [values, setValues] = useState({ email: "", password: "" });
@@ -12,6 +13,9 @@ const HomeViewModel = () => {
     try {
       const response = await API_Miduelo.post("/login", values);
       console.log("✅ Login successful:", response.data);
+      const user= response.data.user;
+      await AsyncStorage.setItem("id_paciente", user.id_paciente.toString());
+
       return response.data;
     } catch (error) {
       console.error("❌ Login failed:", (error as any).response?.data || error);

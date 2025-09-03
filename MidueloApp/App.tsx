@@ -4,11 +4,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 import {HomeScreen} from './src/Presentation/view/home/home';
 import Register from './src/Presentation/view/register/register';
 import WelcomeScreen from './src/Presentation/view/test/bienvenido';
+import Termsandconditions from './src/Presentation/view/cartayterminos/TandC';
 
 export type RootStackParamList = {
   Home: undefined;
   Register: undefined;
   Welcome: undefined;
+  TermsAndConditions: undefined;
 };
 
 const Stack = createStackNavigator();
@@ -20,6 +22,7 @@ const App = () => {
   <Stack.Screen name="Home" component={HomeScreen} />
   <Stack.Screen name="Register" component={Register} />
   <Stack.Screen name="Welcome" component={WelcomeScreen} />
+  <Stack.Screen name="TermsAndConditions" component={Termsandconditions} />
 </Stack.Navigator>
 
     </NavigationContainer>

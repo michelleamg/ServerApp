@@ -12,29 +12,38 @@ import {
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../../../App";
 import useViewModel from "./ViewModel";
+import type { RootStackParamList as AppRootStackParamList } from '../../../../App';
 
 export const HomeScreen = () => {
   const { email, password, onChange, login } = useViewModel();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleLogin = async () => {
-    // Validación local antes de ir al servidor
-    if (!email || !password) {
-      Alert.alert("Error", "Debes ingresar correo y contraseña");
-      return;
-    }
-    try {
-      const data = await login(); // ✅ Solo se llama cuando presiona el botón
-      if (data) {
-        navigation.navigate("Welcome");
+  if (!email || !password) {
+    Alert.alert("Error", "Debes ingresar correo y contraseña");
+    return;
+  }
+
+  try {
+    const data = await login(); // devuelve { message, token, user }
+
+    if (data?.user) {
+      const { aviso_privacidad, terminos_condiciones } = data.user;
+
+      if (aviso_privacidad === 0 && terminos_condiciones === 0) {
+        navigation.replace("TermsAndConditions"); // 👈 pantalla de consentimiento
       } else {
-        Alert.alert("Error", "Credenciales inválidas");
+        navigation.replace("Welcome"); // 👈 tu dashboard / pantalla principal
       }
-    } catch (error) {
-      console.error("❌ Error en login:", error);
-      Alert.alert("Error", "Servidor no disponible o conexión fallida");
+    } else {
+      Alert.alert("Error", "Credenciales inválidas");
     }
-  };
+  } catch (error) {
+    console.error("❌ Error en login:", error);
+    Alert.alert("Error", "Servidor no disponible o conexión fallida");
+  }
+};
+
 
   return (
     <View style={styles.container}>

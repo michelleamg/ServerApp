@@ -66,30 +66,33 @@ export const AuthController = {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // 👇 usa 'contrasena' (como está en tu tabla)
-    const match = await bcrypt.compare(password, user.contrasena || "");
-    if (!match) {
-      return res.status(401).json({ message: "Contraseña incorrecta" });
-    }
+  //  usa 'contrasena' (como está en tu tabla)
+  const match = await bcrypt.compare(password, user.contrasena || "");
+  if (!match) {
+    return res.status(401).json({ message: "Contraseña incorrecta" });
+  }
+  
+  const consent = await User.findConsentimientos(user.id_paciente);
+  
+  const token = jwt.sign(
+    { sub: user.id_paciente, role: "paciente" },
+    process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59",
+    { expiresIn: "7d" }
+  );
 
-    const token = jwt.sign(
-      { sub: user.id_paciente, role: "paciente" },
-      process.env.JWT_SECRET || "mi_super_secreto",
-      { expiresIn: "7d" }
-    );
-
-    return res.status(200).json({
-      message: "Login exitoso",
-      token,
-      user: {
-        id_paciente: user.id_paciente,
-        nombre: user.nombre,
-        email: user.email,
-      },
-    });
+  return res.status(200).json({
+    message: "Login exitoso",
+    token,
+    user: {
+      id_paciente: user.id_paciente,
+      nombre: user.nombre,
+      email: user.email,
+      aviso_privacidad: consent?.aviso_privacidad || 0,
+      terminos_condiciones: consent?.terminos_condiciones || 0,
+    },
+  });
   } catch (err) {
-    console.error("❌ Error en login:", err);
+    console.error(" Error en login:", err);
     return res.status(500).json({ message: "Error en el servidor", error: err.message });
   }
-}
-};
+}};

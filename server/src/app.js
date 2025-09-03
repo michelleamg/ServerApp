@@ -17,8 +17,9 @@ app.use(cors());
 app.disable("x-powered-by"); 
 
 // Rutas
+app.use(authRoutes); // sin /api/auth
 app.use(indexRoutes);
-app.use(authRoutes);
+//app.use(authRoutes);
 //app.use(userRoutes);
 
 // Manejo de errores
