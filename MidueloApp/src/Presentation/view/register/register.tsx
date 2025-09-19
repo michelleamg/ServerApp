@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { 
   StyleSheet, Text, View, Image, TextInput, 
-  TouchableOpacity, ScrollView, Alert 
+  TouchableOpacity, ScrollView, Alert, 
+  ToastAndroid
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
@@ -159,12 +160,13 @@ export default function Register() {
             />
           </View>
 
-          {/* Botón registro */}
+          {errorMessage ? (
+            <Text style={{ color: "red", textAlign: "center", marginTop: 10 }}>{errorMessage}</Text>
+          ) : null}
           <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
             <Text style={styles.registerButtonText}>Registrarse</Text>
           </TouchableOpacity>
 
-          {/* Link login */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
             <TouchableOpacity onPress={() => navigation.navigate("Home")}>
@@ -221,4 +223,3 @@ const styles = StyleSheet.create({
     color: "#4CAF50", fontWeight: "bold",
   },
 });
-// --- IGNORE ---
