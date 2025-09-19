@@ -14,7 +14,7 @@ export default function Register() {
   const { 
     nombre, apellido_paterno, apellido_materno, 
     fecha_nacimiento, telefono, email, password, codigo_psicologo,
-    onChange, register 
+    onChange, register, isValidForm, errorMessage
   } = RegisterViewModel();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -27,14 +27,12 @@ export default function Register() {
     }
 
     try {
-      const data = await register();
-      if (data) {
-        Alert.alert("✅ Registro exitoso", "Ya puedes iniciar sesión");
-        navigation.navigate("Home");
-      }
+      await register();
+      Alert.alert(" Registro exitoso", "Ya puedes iniciar sesión");
+      navigation.navigate("Home");
     } catch (err) {
-      console.error("❌ Error en registro:", err);
-      Alert.alert("❌ Error", "No se pudo registrar. Intenta de nuevo.");
+      console.error("Error en registro:", err);
+      Alert.alert("Error", "No se pudo registrar. Intenta de nuevo.");
     }
   };
 

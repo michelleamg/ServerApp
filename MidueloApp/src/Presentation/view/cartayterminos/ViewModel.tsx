@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_Miduelo } from "../../../Data/sources/remote/api/ApiMiduelo";
+import { API_Miduelo } from "../../../Data/Sources/remote/api/ApiMiduelo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const useConsentimientoViewModel = () => {

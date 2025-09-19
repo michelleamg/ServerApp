@@ -1,17 +1,19 @@
 
-   import { useState } from "react";
-import { API_Miduelo } from "../../../Data/sources/remote/api/ApiMiduelo";
+import { useState } from "react";
+import { RegisterAuthUseCase } from "../../../Domain/useCases/auth/RegisterAuth";
 
 const RegisterViewModel = () => {
+
+  const[errorMessage, setErrorMessage] = useState("");
   const [values, setValues] = useState({
   nombre: "",
   apellido_paterno: "",
   apellido_materno: "",
-  fecha_nacimiento: "",  // 👈 nuevo
+  fecha_nacimiento: "", 
   telefono: "",
   email: "",
   password: "",
-  codigo_psicologo: "",  // 👈 obligatorio
+  codigo_psicologo: "",  
 });
 
   const onChange = (property: string, value: string) => {
@@ -19,21 +21,26 @@ const RegisterViewModel = () => {
   };
 
   const register = async () => {
-    try {
-      const response = await API_Miduelo.post("/register", values);
-      console.log("✅ Registro exitoso:", response.data);
-      return response.data;
-    } catch (error) {
-      const axiosError = error as any;
-      console.error("❌ Registro fallido:", axiosError.response?.data || error);
-      throw error;
+    if (!isValidForm()) {
+      const { result, error } = await RegisterAuthUseCase(values);
+      console.log('Result:' + JSON.stringify(result));
     }
+  };
+
+  const isValidForm = (): boolean => {
+    if (values.nombre === "" || values.apellido_paterno === "" || values.apellido_materno === "" || values.fecha_nacimiento === "" || values.telefono === "" || values.email === "" || values.password === "") {
+      setErrorMessage("Por favor, complete todos los campos obligatorios.");
+      return false;
+    }
+    return true;
   };
 
   return {
     ...values,
     onChange,
     register,
+    isValidForm,
+    errorMessage
   };
 };
 

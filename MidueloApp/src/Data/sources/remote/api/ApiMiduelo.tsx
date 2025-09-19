@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_Miduelo = axios.create({
-  baseURL: "http://10.189.53.250:3000",
+  baseURL: "http://192.168.1.72:3000",
   headers: { "Content-Type": "application/json" }
 });
 
@@ -13,7 +13,7 @@ API_Miduelo.post("/login", {
   console.log("✅ Login:", res.data);
 })
 .catch(err => {
-  console.error("❌ Error en login:", err.response?.data || err.message);
+  console.error("Error en login:", err.response?.data || err.message);
 });
 
 API_Miduelo.post("/register", {
