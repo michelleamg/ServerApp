@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import { 
   StyleSheet, Text, View, Image, TextInput, 
   TouchableOpacity, ScrollView, Alert, 
@@ -15,8 +15,14 @@ export default function Register() {
   const { 
     nombre, apellido_paterno, apellido_materno, 
     fecha_nacimiento, telefono, email, password, codigo_psicologo,
-    onChange, register, isValidForm, errorMessage
+    onChange, register, errorMessage
   } = RegisterViewModel();
+
+  useEffect(() => {
+    if (errorMessage) {
+      ToastAndroid.show(errorMessage, ToastAndroid.LONG);
+    }
+  }, [errorMessage]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -132,7 +138,7 @@ export default function Register() {
             />
           </View>
 
-          {/* Contraseña con toggle 👁️ */}
+          {/* Contraseña con toggle */}
           <View style={styles.inputContainer}>
             <Image source={require("../../../../assets/duelingo.png")} style={styles.inputIcon} />
             <TextInput 

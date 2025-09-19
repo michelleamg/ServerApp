@@ -21,7 +21,7 @@ const RegisterViewModel = () => {
   };
 
   const register = async () => {
-    if (!isValidForm()) {
+    if (isValidForm()) {
       const { result, error } = await RegisterAuthUseCase(values);
       console.log('Result:' + JSON.stringify(result));
     }
@@ -39,7 +39,6 @@ const RegisterViewModel = () => {
     ...values,
     onChange,
     register,
-    isValidForm,
     errorMessage
   };
 };
