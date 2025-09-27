@@ -1,4 +1,4 @@
-import React from "react";
+import Reactfrom, {useEffect} from "react";
 import { useNavigation } from "@react-navigation/native";
 import {
   StyleSheet,
@@ -15,35 +15,46 @@ import useViewModel from "./ViewModel";
 import type { RootStackParamList as AppRootStackParamList } from '../../../../App';
 
 export const HomeScreen = () => {
+  interface LoginResponse {
+    message?: string;
+    token?: string;
+    user?: {
+      aviso_privacidad: number;
+      terminos_condiciones: number;
+      // agrega aquí otras propiedades si es necesario
+    };
+  }
+
+  // Get navigation and ViewModel hooks
+  const navigation = useNavigation<StackNavigationProp<AppRootStackParamList>>();
   const { email, password, onChange, login } = useViewModel();
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const handleLogin = async () => {
-  if (!email || !password) {
-    Alert.alert("Error", "Debes ingresar correo y contraseña");
-    return;
-  }
-
-  try {
-    const data = await login(); // devuelve { message, token, user }
-
-    if (data?.user) {
-      const { aviso_privacidad, terminos_condiciones } = data.user;
-
-      if (aviso_privacidad === 0 && terminos_condiciones === 0) {
-        navigation.replace("TermsAndConditions"); // 👈 pantalla de consentimiento
-      } else {
-        navigation.replace("Welcome"); // 👈 tu dashboard / pantalla principal
-      }
-    } else {
-      Alert.alert("Error", "Credenciales inválidas");
+    if (!email || !password) {
+      Alert.alert("Error", "Debes ingresar correo y contraseña");
+      return;
     }
-  } catch (error) {
-    console.error("❌ Error en login:", error);
-    Alert.alert("Error", "Servidor no disponible o conexión fallida");
-  }
-};
 
+    try {
+      // Explicitly type the result as LoginResponse | undefined
+      const data = await (login() as Promise<LoginResponse | undefined>);
+
+      if (data && typeof data === 'object' && data.user) {
+        const { aviso_privacidad, terminos_condiciones } = data.user;
+
+        if (aviso_privacidad === 0 && terminos_condiciones === 0) {
+          navigation.replace("TermsAndConditions"); // 👈 pantalla de consentimiento
+        } else {
+          navigation.replace("Welcome"); // 👈 tu dashboard / pantalla principal
+        }
+      } else {
+        Alert.alert("Error", "Credenciales inválidas");
+      }
+    } catch (error) {
+      console.error("❌ Error en login:", error);
+      Alert.alert("Error", "Servidor no disponible o conexión fallida");
+    }
+  };
 
   return (
     <View style={styles.container}>

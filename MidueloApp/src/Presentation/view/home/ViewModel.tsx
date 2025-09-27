@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { API_Miduelo } from "../../../Data/Sources/remote/api/ApiMiduelo";
+import { LoginAuthUseCase } from "../../../Domain/useCases/auth/Login";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AxiosError } from "axios";
 
 const HomeViewModel = () => {
   const [values, setValues] = useState({ email: "", password: "" });
@@ -11,22 +13,28 @@ const HomeViewModel = () => {
 
   const login = async () => {
     try {
-      const response = await API_Miduelo.post("/login", values);
-      console.log("✅ Login successful:", response.data);
-      const user= response.data.user;
-      await AsyncStorage.setItem("id_paciente", user.id_paciente.toString());
-
-      return response.data;
+      const response = await LoginAuthUseCase.execute(values.email, values.password);
+      console.log("RESPONSE:", JSON.stringify(response));
+  
     } catch (error) {
-      console.error("❌ Login failed:", (error as any).response?.data || error);
+      console.error("Login failed:", (error as AxiosError).response?.data || error);
       throw error;
     }
+  };
+
+  const isValidForm = ():boolean => {
+    if (!values.email || !values.password) {
+      return false;
+    }
+    return true;
   };
 
   return {
     ...values,
     onChange,
     login,
+    isValidForm,
+    errorMessage: values.email === "" || values.password === "" ? "Debes ingresar correo y contraseña" : "",
   };
 };
 

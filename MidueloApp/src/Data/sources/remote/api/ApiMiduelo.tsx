@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_Miduelo = axios.create({
-  baseURL: "http://192.168.1.72:3000",
+  baseURL: "http://172.208.48.88:3000",
   headers: { "Content-Type": "application/json" }
 });
 

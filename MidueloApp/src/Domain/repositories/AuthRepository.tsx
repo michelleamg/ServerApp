@@ -3,5 +3,6 @@ import { RegisterResponse} from '../../Data/Sources/remote/models/responseApiMiD
 
 export interface AuthRepository {
 
+  login(email: string, password: string): Promise<RegisterResponse>; // Retorna un token
   register(user: User): Promise<RegisterResponse>;
 }
