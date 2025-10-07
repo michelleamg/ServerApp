@@ -1,37 +1,49 @@
-import axios from "axios";
+// En src/Data/sources/remote/api/ApiMiduelo.tsx
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-const API_Miduelo = axios.create({
-  baseURL: "http://172.208.48.88:3000",
-  headers: { "Content-Type": "application/json" }
+// CONFIGURACIONES POSIBLES:
+
+// Opción 1: Para emulador Android
+// const BASE_URL = Platform.OS === 'android' 
+//   ? 'http://10.0.2.2:3000/api' // Android emulador
+//   : 'http://localhost:3000/api'; // iOS emulador
+
+// Opción 2: Para dispositivo físico (USA TU IP LOCAL)
+const BASE_URL = 'http://192.168.1.80:3000/api'; // ← Cambia por tu IP
+
+// Opción 3: Si usas un servidor en la nube
+// const BASE_URL = 'https://tudominio.com/api';
+
+export const API_Miduelo = axios.create({
+  baseURL: BASE_URL,
+  timeout: 15000, // Aumenta el timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
 });
 
-API_Miduelo.post("/login", {
-  email: '',
-  password: ''
-})
-.then(res => {
-  console.log("✅ Login:", res.data);
-})
-.catch(err => {
-  console.error("Error en login:", err.response?.data || err.message);
-});
+// Interceptor para logs (para debug)
+API_Miduelo.interceptors.request.use(
+  (config) => {
+    console.log(`🔄 Making request to: ${config.baseURL}${config.url}`);
+    return config;
+  },
+  (error) => {
+    console.log('❌ Request error:', error);
+    return Promise.reject(error);
+  }
+);
 
-API_Miduelo.post("/register", {
-  nombre: '',
-  apellido_paterno: '',
-  apellido_materno: '',
-  codigo_psicologo: '',
-  telefono: '',
-  email: '',
-  password: ''
-})
-.then(res => {
-  console.log("✅ Registro exitoso:", res.data);
-})
-.catch(err => {
-  console.error("❌ Error en registro:", err.response?.data || err.message);
-});
-
-
-
-export {API_Miduelo};
+API_Miduelo.interceptors.response.use(
+  (response) => {
+    console.log('✅ Response received:', response.status);
+    return response;
+  },
+  (error) => {
+    console.log('❌ Response error:', error.message);
+    return Promise.reject(error);
+  }
+);

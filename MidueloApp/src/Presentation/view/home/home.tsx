@@ -1,33 +1,18 @@
-import Reactfrom, {useEffect} from "react";
-import { useNavigation } from "@react-navigation/native";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  Alert,
+// Presentation/view/home/home.tsx
+import React, { useState } from "react";
+import { 
+  View, Text, TextInput, TouchableOpacity, Image, Alert, 
+  ActivityIndicator 
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../../../App";
 import useViewModel from "./ViewModel";
-import type { RootStackParamList as AppRootStackParamList } from '../../../../App';
 
 export const HomeScreen = () => {
-  interface LoginResponse {
-    message?: string;
-    token?: string;
-    user?: {
-      aviso_privacidad: number;
-      terminos_condiciones: number;
-      // agrega aquí otras propiedades si es necesario
-    };
-  }
-
-  // Get navigation and ViewModel hooks
-  const navigation = useNavigation<StackNavigationProp<AppRootStackParamList>>();
-  const { email, password, onChange, login } = useViewModel();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { email, password, onChange, login, error } = useViewModel();
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -35,24 +20,33 @@ export const HomeScreen = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      // Explicitly type the result as LoginResponse | undefined
-      const data = await (login() as Promise<LoginResponse | undefined>);
-
-      if (data && typeof data === 'object' && data.user) {
-        const { aviso_privacidad, terminos_condiciones } = data.user;
-
-        if (aviso_privacidad === 0 && terminos_condiciones === 0) {
-          navigation.replace("TermsAndConditions"); // 👈 pantalla de consentimiento
+      const response = await login();
+      
+      if (response && response.user) {
+        console.log("📋 Consentimientos del usuario:", {
+          aviso: response.user.aviso_privacidad,
+          terminos: response.user.terminos_condiciones
+        });
+        
+        // 🔥 NAVEGACIÓN BASADA EN CONSENTIMIENTOS
+        if (response.user.aviso_privacidad === 0 || response.user.terminos_condiciones === 0) {
+          console.log("🚀 Navegando a TermsAndConditions");
+          navigation.replace("TermsAndConditions");
         } else {
-          navigation.replace("Welcome"); // 👈 tu dashboard / pantalla principal
+          console.log("🚀 Navegando a Welcome");
+          navigation.replace("Welcome");
         }
       } else {
-        Alert.alert("Error", "Credenciales inválidas");
+        const errorMessage = response?.message || "Credenciales incorrectas";
+        Alert.alert("Error", errorMessage);
       }
     } catch (error) {
-      console.error("❌ Error en login:", error);
-      Alert.alert("Error", "Servidor no disponible o conexión fallida");
+      console.error("Error en login:", error);
+      Alert.alert("Error", "No se pudo conectar al servidor");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,8 +89,18 @@ export const HomeScreen = () => {
           />
         </View>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <TouchableOpacity 
+          style={[styles.loginButton, loading && styles.disabledButton]} 
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.registerContainer}>
@@ -110,9 +114,13 @@ export const HomeScreen = () => {
   );
 };
 
+import { StyleSheet, Dimensions } from "react-native";
+
+const { width, height } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  imageBackground: { width: "100%", height: "100%" },
+  imageBackground: { width, height, position: "absolute" },
   form: {
     width: "90%",
     maxWidth: 350,
@@ -129,7 +137,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "black",
-    fontFamily: "sans-serif",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -147,9 +154,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#4CAF50",
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
+    padding: 15,
     marginTop: 20,
     borderRadius: 5,
+  },
+  disabledButton: {
+    backgroundColor: "#A5D6A7",
   },
   loginButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
   registerContainer: {
@@ -159,5 +169,11 @@ const styles = StyleSheet.create({
   },
   registerText: { fontSize: 14, color: "black" },
   registerLink: { fontSize: 14, color: "#4CAF50", fontWeight: "bold" },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginTop: 10,
+  },
 });
+
 export default HomeScreen;

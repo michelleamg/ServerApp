@@ -7,6 +7,6 @@ app.listen(PORT, "0.0.0.0", () => {
 
 // Middleware global para errores
 app.use((err, req, res, next) => {
-  console.error("❌ Error:", err);
+  console.error("Error:", err);
   res.status(err.status || 500).send(err.stack);
 });

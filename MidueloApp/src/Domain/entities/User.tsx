@@ -8,4 +8,7 @@ export interface User {
     email:            string;
     password:         string;
     codigo_psicologo: string;
+    sesion_token?:   string;
+    creado_en?:      string;
+    actualizado_en?: string;
 }

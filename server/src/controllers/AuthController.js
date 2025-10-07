@@ -42,57 +42,104 @@ export const AuthController = {
         codigo_psicologo,
       });
 
+      // Generar token JWT
+      const token = jwt.sign(
+        { sub: newId, role: "paciente" },
+        process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59",
+        { expiresIn: "7d" }
+      );
+
+      // Guardar token en la base de datos
+      await User.saveSessionToken(newId, token);
+
       return res.status(201).json({
         message: "Paciente registrado exitosamente",
-        user: { id_paciente: newId, nombre, email },
+        token,
+        user: { 
+          id_paciente: newId, 
+          nombre, 
+          email,
+          session_token: token 
+        },
       });
     } catch (err) {
-      console.error("❌ Error en register:", err);
+      console.error(" Error en register:", err);
       return res.status(500).json({ message: "Error en el registro", error: err.message });
     }
   },
 
   // Login de paciente
   async login(req, res) {
-  try {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Faltan credenciales" });
+      if (!email || !password) {
+        return res.status(400).json({ message: "Faltan credenciales" });
+      }
+
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      // usa 'contrasena' (como está en tu tabla)
+      const match = await bcrypt.compare(password, user.contrasena || "");
+      if (!match) {
+        return res.status(401).json({ message: "Contraseña incorrecta" });
+      }
+      
+      const consent = await User.findConsentimientos(user.id_paciente);
+      
+      // Generar nuevo token
+      const token = jwt.sign(
+        { sub: user.id_paciente, role: "paciente" },
+        process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59",
+        { expiresIn: "7d" }
+      );
+
+      // Actualizar token en la base de datos
+      await User.saveSessionToken(user.id_paciente, token);
+
+      return res.status(200).json({
+        message: "Login exitoso",
+        token,
+        user: {
+          id_paciente: user.id_paciente,
+          nombre: user.nombre,
+          email: user.email,
+          aviso_privacidad: consent?.aviso_privacidad || 0,
+          terminos_condiciones: consent?.terminos_condiciones || 0,
+          session_token: token
+        },
+      });
+    } catch (err) {
+      console.error(" Error en login:", err);
+      return res.status(500).json({ message: "Error en el servidor", error: err.message });
     }
+  },
 
-    const user = await User.findByEmail(email);
-    if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+  // Middleware para verificar token (opcional, para futuras rutas protegidas)
+  async verifyToken(req, res, next) {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({ message: "Token no proporcionado" });
+      }
+
+      // Verificar si el token existe en la base de datos
+      const user = await User.findByToken(token);
+      if (!user) {
+        return res.status(401).json({ message: "Token inválido" });
+      }
+
+      // Verificar firma JWT
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59");
+      
+      req.user = user;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: "Token inválido o expirado" });
     }
-
-  //  usa 'contrasena' (como está en tu tabla)
-  const match = await bcrypt.compare(password, user.contrasena || "");
-  if (!match) {
-    return res.status(401).json({ message: "Contraseña incorrecta" });
   }
-  
-  const consent = await User.findConsentimientos(user.id_paciente);
-  
-  const token = jwt.sign(
-    { sub: user.id_paciente, role: "paciente" },
-    process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59",
-    { expiresIn: "7d" }
-  );
-
-  return res.status(200).json({
-    message: "Login exitoso",
-    token,
-    user: {
-      id_paciente: user.id_paciente,
-      nombre: user.nombre,
-      email: user.email,
-      aviso_privacidad: consent?.aviso_privacidad || 0,
-      terminos_condiciones: consent?.terminos_condiciones || 0,
-    },
-  });
-  } catch (err) {
-    console.error(" Error en login:", err);
-    return res.status(500).json({ message: "Error en el servidor", error: err.message });
-  }
-}};
+};

@@ -1,5 +1,5 @@
 import { User } from '../entities/User';
-import { RegisterResponse} from '../../Data/Sources/remote/models/responseApiMiDuelo';
+import { RegisterResponse} from '../../Data/sources/remote/models/responseApiMiDuelo';
 
 export interface AuthRepository {
 

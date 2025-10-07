@@ -1,3 +1,4 @@
+// models/userModel.js
 import pool from '../db/db.js';
 
 const User = {};
@@ -5,7 +6,8 @@ const User = {};
 // Buscar paciente por email
 User.findByEmail = async (email) => {
   const sql = `
-    SELECT id_paciente, nombre, apellido_paterno, apellido_materno, email, contrasena, telefono, id_psicologo
+    SELECT id_paciente, nombre, apellido_paterno, apellido_materno, email, 
+           contrasena, telefono, id_psicologo, session_token
     FROM paciente
     WHERE email = ?
     LIMIT 1
@@ -28,7 +30,6 @@ User.findConsentimientos = async (id_paciente) => {
 
 // Crear paciente vinculado a psicólogo
 User.create = async (data) => {
-  // buscar id_psicologo a partir del codigo_vinculacion
   const [rows] = await pool.query(
     "SELECT id_psicologo FROM psicologo WHERE codigo_vinculacion = ? LIMIT 1",
     [data.codigo_psicologo]
@@ -42,7 +43,9 @@ User.create = async (data) => {
 
   const sql = `
     INSERT INTO paciente
-      (nombre, apellido_paterno, apellido_materno, fecha_nacimiento, email, contrasena, telefono, id_psicologo)
+      (nombre, apellido_paterno, apellido_materno, 
+      fecha_nacimiento, email, 
+      contrasena, telefono, id_psicologo)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const [result] = await pool.query(sql, [
@@ -51,12 +54,36 @@ User.create = async (data) => {
     data.apellido_materno,
     data.fecha_nacimiento,
     data.email,
-    data.contrasena, // ya encriptada
+    data.contrasena,
     data.telefono,
     id_psicologo,
   ]);
 
   return result.insertId;
+};
+
+// 🔥 CORREGIDO: Usar los nombres correctos de las columnas
+User.saveSessionToken = async (id_paciente, token) => {
+  const sql = `
+    UPDATE paciente 
+    SET session_token = ?, actualizada_en = CURRENT_TIMESTAMP
+    WHERE id_paciente = ?
+  `;
+  const [result] = await pool.query(sql, [token, id_paciente]);
+  return result.affectedRows > 0;
+};
+
+// 🔥 CORREGIDO: Usar los nombres correctos
+User.findByToken = async (token) => {
+  const sql = `
+    SELECT id_paciente, nombre, apellido_paterno, apellido_materno, email, 
+           telefono, id_psicologo, creada_en
+    FROM paciente
+    WHERE session_token = ?
+    LIMIT 1
+  `;
+  const [rows] = await pool.query(sql, [token]);
+  return rows[0] || null;
 };
 
 export default User;

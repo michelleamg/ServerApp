@@ -1,13 +1,12 @@
 // app.js
 import express from "express";
 import cors from "cors";
-import morgan from "morgan"; 
-// importa tus rutas
+import morgan from "morgan";
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import consentimientoRoutes from "./routes/consentimiento.routes.js";
 
-
-const app = express(); // inicializar app
+const app = express();
 
 // Middlewares
 app.use(morgan("dev"));
@@ -17,12 +16,18 @@ app.use(cors());
 app.disable("x-powered-by"); 
 
 // Rutas
-app.use(authRoutes); // sin /api/auth
-app.use(indexRoutes);
-//app.use(authRoutes);
-//app.use(userRoutes);
+app.use("/api", authRoutes);
+app.use("/api", indexRoutes);
+app.use("/api/consentimientos", consentimientoRoutes);
 
-// Manejo de errores
+// Ruta de prueba
+app.get("/api/ping", (req, res) => {
+  res.json({ message: "pong", timestamp: new Date() });
+});
 
+// Manejo de errores para rutas no encontradas
+app.use((req, res) => {
+  res.status(404).json({ message: "Ruta no encontrada: " + req.url });
+});
 
 export default app;

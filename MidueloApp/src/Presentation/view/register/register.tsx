@@ -28,20 +28,30 @@ export default function Register() {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleRegister = async () => {
-    if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento || !telefono || !email || !password || !codigo_psicologo) {
-      Alert.alert("Error", "Todos los campos son obligatorios");
-      return;
-    }
+  if (!nombre || !apellido_paterno || !apellido_materno || !fecha_nacimiento || !telefono || !email || !password || !codigo_psicologo) {
+    Alert.alert("Error", "Todos los campos son obligatorios");
+    return;
+  }
 
-    try {
-      await register();
-      Alert.alert(" Registro exitoso", "Ya puedes iniciar sesión");
+  try {
+    const { success, token } = await register();
+    
+    if (success) {
+      if (token) {
+        // Aquí puedes guardar el token en el almacenamiento local
+        // await AsyncStorage.setItem('userToken', token);
+        console.log('Token guardado:', token);
+      }
+      Alert.alert("Registro exitoso", "Ya puedes iniciar sesión");
       navigation.navigate("Home");
-    } catch (err) {
-      console.error("Error en registro:", err);
+    } else {
       Alert.alert("Error", "No se pudo registrar. Intenta de nuevo.");
     }
-  };
+  } catch (err) {
+    console.error("Error en registro:", err);
+    Alert.alert("Error", "No se pudo registrar. Intenta de nuevo.");
+  }
+};
 
   return (
     <View style={styles.container}>
