@@ -3,8 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import {HomeScreen} from './src/Presentation/view/home/home';
 import Register from './src/Presentation/view/register/register';
-import WelcomeScreen from './src/Presentation/view/test/bienvenido';
+import WelcomeScreen from './src/Presentation/view/Bienvenida/bienvenido';
 import Termsandconditions from './src/Presentation/view/cartayterminos/TandC';
+import InicioTestScreen from './src/Presentation/view/TestDuelo/Inicio';
+import TestParteUnoScreen from './src/Presentation/view/TestDuelo/TestParteUno';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -23,6 +25,9 @@ const App = () => {
   <Stack.Screen name="Register" component={Register} />
   <Stack.Screen name="Welcome" component={WelcomeScreen} />
   <Stack.Screen name="TermsAndConditions" component={Termsandconditions} />
+  <Stack.Screen name="InicioTest" component={InicioTestScreen}  />
+  <Stack.Screen name="ParteUno" component={TestParteUnoScreen}  />
+
 </Stack.Navigator>
 
     </NavigationContainer>

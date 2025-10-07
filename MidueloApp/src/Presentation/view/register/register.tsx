@@ -43,7 +43,7 @@ export default function Register() {
         console.log('Token guardado:', token);
       }
       Alert.alert("Registro exitoso", "Ya puedes iniciar sesión");
-      navigation.navigate("Home");
+      navigation.navigate("TermsAndConditions");
     } else {
       Alert.alert("Error", "No se pudo registrar. Intenta de nuevo.");
     }
