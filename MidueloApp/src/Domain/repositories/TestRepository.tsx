@@ -1,8 +1,7 @@
-// Domain/repositories/TestRepository.ts
-import { Question, TestSubmission, TestResult } from '../entities/Question';
+import { TestResult, TestAnswer } from '../entities/Test';
 
 export interface TestRepository {
-  getQuestions(): Promise<Question[]>;
-  submitTest(submission: TestSubmission): Promise<TestResult>;
-  getTestHistory(id_paciente: number): Promise<TestSubmission[]>;
+  saveTestResults(results: TestResult): Promise<TestResult>;
+  getTestResults(userId: string): Promise<TestResult[]>;
+  getTestQuestions(): Promise<any[]>;
 }

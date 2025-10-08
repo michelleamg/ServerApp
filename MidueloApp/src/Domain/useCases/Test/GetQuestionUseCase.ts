@@ -1,11 +1,15 @@
-// Domain/useCases/test/GetQuestionsUseCase.ts
 import { TestRepository } from '../../repositories/TestRepository';
-import { Question } from '../../entities/Question';
+import { TestQuestion } from '../../entities/Test';
 
-export class GetQuestionsUseCase {
-  constructor(private repository: TestRepository) {}
+export class GetTestQuestionsUseCase {
+  constructor(private testRepository: TestRepository) {}
 
-  async execute(): Promise<Question[]> {
-    return await this.repository.getQuestions();
+  async execute(): Promise<TestQuestion[]> {
+    const questions = await this.testRepository.getTestQuestions();
+    return questions.map((q: any) => ({
+      id: q.id,
+      text: q.text,
+      section: q.section
+    }));
   }
 }

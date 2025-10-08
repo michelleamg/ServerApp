@@ -1,78 +1,97 @@
-import React from 'react';
+import React, { useState } from "react";
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity,
   ScrollView,
-  Alert 
-} from 'react-native';
-import { useTestViewModel } from './TestViewModel';
-import { useTestDependencies } from '../../../di/DependencyProvider';
+  Alert
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { StackNavigationProp } from '@react-navigation/stack';
 
-//function TestParteUno({});
-const answerOptions = [
-  { value: 1, label: "Completamente falsa", description: "No se parece en nada a mi experiencia" },
-  { value: 2, label: "Falsa en su mayor parte", description: "Casi nunca me ha pasado" },
-  { value: 3, label: "Ni verdadera ni falsa", description: "No estoy seguro/a o a veces sí, a veces no" },
-  { value: 4, label: "Verdadera en su mayor parte", description: "La mayoría de las veces ha sido así" },
-  { value: 5, label: "Completamente verdadera", description: "Describe perfectamente mi experiencia" }
+// Definimos el tipo para las respuestas
+type AnswerValue = 1 | 2 | 3 | 4 | 5;
+
+interface Question {
+  id: number;
+  text: string;
+}
+
+const questions: Question[] = [
+  { id: 1, text: "Tras su muerte me costaba relacionarme con algunas personas." },
+  { id: 2, text: "Tras su muerte me costaba concentrarme en mi trabajo." },
+  { id: 3, text: "Tras su muerte perdí el interés en mi familia, amigos y actividades fuera de casa." },
+  { id: 4, text: "Tenía la necesidad de hacer las cosas que él/ella había querido hacer." },
+  { id: 5, text: "Después de su muerte estaba más irritable de lo normal." },
+  { id: 6, text: "En los tres primeros meses después de su muerte me sentía incapaz de realizar mis actividades habituales." },
+  { id: 7, text: "Me sentía furioso/a porque me había abandonado." },
+  { id: 8, text: "Tras su muerte me costaba trabajo dormir." }
 ];
 
-export const TestFormScreen: React.FC = () => {
-  const { getTestQuestionsUseCase, submitTestUseCase } = useTestDependencies();
-  const {
-    questions,
-    currentQuestion,
-    answers,
-    loading,
-    error,
-    submitAnswer,
-    goToPrevious,
-    submitTest,
-    getProgress
-  } = useTestViewModel(getTestQuestionsUseCase, submitTestUseCase);
+const answerOptions = [
+  { value: 1 as AnswerValue, label: "Completamente falsa", description: "No se parece en nada a mi experiencia" },
+  { value: 2 as AnswerValue, label: "Falsa en su mayor parte", description: "Casi nunca me ha pasado" },
+  { value: 3 as AnswerValue, label: "Ni verdadera ni falsa", description: "No estoy seguro/a o a veces sí, a veces no" },
+  { value: 4 as AnswerValue, label: "Verdadera en su mayor parte", description: "La mayoría de las veces ha sido así" },
+  { value: 5 as AnswerValue, label: "Completamente verdadera", description: "Describe perfectamente mi experiencia" }
+];
 
-  const handleSubmit = async () => {
-    try {
-      // Aquí obtendrías el userId del contexto de autenticación
-      const userId = "user123"; // Temporal
-      const result = await submitTest(userId);
-      
-      Alert.alert(
-        "Test Completado", 
-        `Tu tipo de duelo es: ${result.griefType}`
-      );
-    } catch (err) {
-      Alert.alert("Error", "No se pudo enviar el test");
+export default function TestFormScreen() {
+  const navigation = useNavigation<StackNavigationProp<any>>();
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, AnswerValue>>({});
+
+  const handleAnswer = (questionId: number, answer: AnswerValue) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+
+    // Avanzar a la siguiente pregunta automáticamente
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
     }
   };
 
-  if (loading && questions.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text>Cargando preguntas...</Text>
-      </View>
-    );
-  }
+  const handlePrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(prev => prev - 1);
+    }
+  };
 
-  if (error) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
-  }
+  const handleSubmit = () => {
+    const answeredQuestions = Object.keys(answers).length;
+    
+    if (answeredQuestions < questions.length) {
+      Alert.alert(
+        "Test incompleto",
+        `Has respondido ${answeredQuestions} de ${questions.length} preguntas. ¿Deseas continuar de todas formas?`,
+        [
+          { text: "Seguir respondiendo", style: "cancel" },
+          { 
+            text: "Continuar", 
+            style: "default",
+            onPress: () => navigateToNextPart()
+          }
+        ]
+      );
+    } else {
+      navigateToNextPart();
+    }
+  };
 
-  if (questions.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text>No hay preguntas disponibles</Text>
-      </View>
-    );
-  }
+  const navigateToNextPart = () => {
+    // Guardar las respuestas y navegar a la siguiente parte
+    console.log("Respuestas guardadas:", answers);
+    // Aquí podrías guardar las respuestas en AsyncStorage o en un estado global
+    // navigation.navigate("ParteDosTestScreen");
+    Alert.alert("Test completado", "Has completado la primera parte del test.");
+  };
 
-  const currentQ = questions[currentQuestion];
+  const getProgress = () => {
+    return ((currentQuestion + 1) / questions.length) * 100;
+  };
 
   return (
     <View style={styles.container}>
@@ -94,13 +113,20 @@ export const TestFormScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           
-          {/* Pregunta */}
+          {/* Pregunta actual */}
           <View style={styles.questionCard}>
             <Text style={styles.questionNumber}>
               Pregunta {currentQuestion + 1}
             </Text>
             <Text style={styles.questionText}>
-              {currentQ.text}
+              {questions[currentQuestion].text}
+            </Text>
+          </View>
+
+          {/* Instrucción */}
+          <View style={styles.instructions}>
+            <Text style={styles.instructionsText}>
+              Selecciona la opción que mejor describa tu experiencia:
             </Text>
           </View>
 
@@ -111,9 +137,10 @@ export const TestFormScreen: React.FC = () => {
                 key={option.value}
                 style={[
                   styles.answerButton,
-                  answers[currentQ.id] === option.value && styles.answerButtonSelected
+                  answers[questions[currentQuestion].id] === option.value && 
+                  styles.answerButtonSelected
                 ]}
-                onPress={() => submitAnswer(currentQ.id, option.value)}
+                onPress={() => handleAnswer(questions[currentQuestion].id, option.value)}
               >
                 <View style={styles.answerContent}>
                   <View style={styles.answerHeader}>
@@ -121,7 +148,8 @@ export const TestFormScreen: React.FC = () => {
                       <View 
                         style={[
                           styles.answerCircle,
-                          answers[currentQ.id] === option.value && styles.answerCircleSelected
+                          answers[questions[currentQuestion].id] === option.value && 
+                          styles.answerCircleSelected
                         ]}
                       />
                     </View>
@@ -145,7 +173,7 @@ export const TestFormScreen: React.FC = () => {
                 styles.previousButton,
                 currentQuestion === 0 && styles.navButtonDisabled
               ]}
-              onPress={goToPrevious}
+              onPress={handlePrevious}
               disabled={currentQuestion === 0}
             >
               <Text style={[
@@ -160,33 +188,39 @@ export const TestFormScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.submitButton}
                 onPress={handleSubmit}
-                disabled={loading}
               >
                 <Text style={styles.submitButtonText}>
-                  {loading ? 'Enviando...' : 'Finalizar'}
+                  Finalizar
                 </Text>
               </TouchableOpacity>
-            ) : null}
+            ) : (
+              <TouchableOpacity
+                style={styles.nextButton}
+                onPress={() => setCurrentQuestion(prev => prev + 1)}
+              >
+                <Text style={styles.navButtonText}>
+                  Siguiente
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Información adicional */}
+          <View style={styles.infoBox}>
+            <Text style={styles.infoText}>
+              💡 Recuerda: Responde según cómo te sentiste en los primeros meses tras la pérdida.
+            </Text>
           </View>
         </View>
       </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: "#f8f9fa" 
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16
   },
   progressContainer: {
     paddingHorizontal: 20,
@@ -227,7 +261,10 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
@@ -244,6 +281,15 @@ const styles = StyleSheet.create({
     color: "#333",
     lineHeight: 24,
   },
+  instructions: {
+    marginBottom: 20,
+  },
+  instructionsText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    fontStyle: "italic",
+  },
   answersContainer: {
     marginBottom: 30,
   },
@@ -255,7 +301,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
@@ -314,6 +363,9 @@ const styles = StyleSheet.create({
   previousButton: {
     backgroundColor: "#e0e0e0",
   },
+  nextButton: {
+    backgroundColor: "#4CAF50",
+  },
   submitButton: {
     backgroundColor: "#2196F3",
     paddingVertical: 12,
@@ -337,5 +389,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  infoBox: {
+    backgroundColor: "#E3F2FD",
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#2196F3",
+  },
+  infoText: {
+    fontSize: 14,
+    color: "#1565C0",
+    lineHeight: 18,
   },
 });
