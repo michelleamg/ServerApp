@@ -1,0 +1,26 @@
+# IGNORAR TODOS LOS node_modules EN CUALQUIER CARPETA
+**/node_modules/
+
+# IGNORAR CARPETAS DE BUILD
+**/build/
+**/dist/
+**/.expo/
+
+# ARCHIVOS DE ENTORNO
+**/.env
+**/.env.*
+
+# LOGS
+**/*.log
+
+# SISTEMA
+**/.DS_Store
+**/Thumbs.db
+
+# ANDROID
+android/**/build/
+android/**/.gradle/
+
+# iOS
+ios/build/
+ios/Pods/
