@@ -146,7 +146,8 @@ export const AuthController = {
   },
 
     // Recuperación de contraseña
-  async recoverPassword(req, res) {
+  // Recuperación de contraseña (versión simplificada con token en el correo)
+async recoverPassword(req, res) {
     try {
       const { email } = req.body;
 
@@ -159,16 +160,12 @@ export const AuthController = {
         return res.status(404).json({ message: "No existe una cuenta con este correo" });
       }
 
-      // Crear token temporal
+      // Crear token y expiración
       const token = crypto.randomBytes(20).toString("hex");
-      // 15 minutos a partir de ahora
-      const expires = new Date(Date.now() + 15 * 60 * 1000);
-      // Guarda token y expiración en BD
+      const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
       await User.saveResetToken(user.id_paciente, token, expires);
-      
-      const resetLink = `https://midueloapp.com/reset-password?token=${token}`;
 
-      // Configurar transporte SMTP de Hostinger
+      // Configurar SMTP
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT,
@@ -179,7 +176,7 @@ export const AuthController = {
         },
       });
 
-      // Enviar correo de recuperación
+      // Enviar correo con token directamente
       await transporter.sendMail({
         from: `"MiDuelo Soporte" <${process.env.SMTP_USER}>`,
         to: email,
@@ -188,8 +185,11 @@ export const AuthController = {
           <div style="font-family: Arial, sans-serif; color: #333;">
             <h2 style="color:#2E7D32;">Hola ${user.nombre || "usuario"},</h2>
             <p>Has solicitado restablecer tu contraseña en <b>MiDuelo</b>.</p>
-            <p>Puedes hacerlo haciendo clic en el siguiente enlace:</p>
-            <a href="${resetLink}" style="background-color:#4CAF50;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">Restablecer contraseña</a>
+            <p>Usa el siguiente código en la aplicación móvil para restablecer tu contraseña:</p>
+            <div style="background-color:#e8f5e9; padding:12px 20px; border-radius:8px; font-size:18px; font-weight:bold; display:inline-block; margin:10px 0;">
+              ${token}
+            </div>
+            <p>Este código expirará en 15 minutos.</p>
             <p style="margin-top:20px;">Si no solicitaste esto, puedes ignorar este mensaje.</p>
             <hr/>
             <p style="font-size:12px;color:#777;">© ${new Date().getFullYear()} MiDuelo. Todos los derechos reservados.</p>
@@ -197,14 +197,15 @@ export const AuthController = {
         `,
       });
 
-      console.log(`📧 Correo de recuperación enviado a: ${email}`);
-      return res.status(200).json({ message: "Se ha enviado un enlace de recuperación a tu correo." });
+      console.log(`📧 Token de recuperación enviado a: ${email} (${token})`);
+      return res.status(200).json({ message: "Se ha enviado el código de recuperación a tu correo." });
 
     } catch (err) {
       console.error("❌ Error en recoverPassword:", err);
       return res.status(500).json({ message: "Error al enviar el correo", error: err.message });
     }
   },
+
 
   // Aplicar nueva contraseña usando el token
 async resetPassword(req, res) {
