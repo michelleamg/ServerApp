@@ -86,4 +86,37 @@ User.findByToken = async (token) => {
   return rows[0] || null;
 };
 
+// Guardar token y expiración
+User.saveResetToken = async (id_paciente, token, expires) => {
+  const sql = `UPDATE paciente SET reset_token = ?, reset_expires = ? WHERE id_paciente = ?`;
+  await pool.query(sql, [token, expires, id_paciente]);
+  return true;
+};
+
+// Buscar por token válido (no expirado)
+User.findByResetToken = async (token) => {
+  const sql = `
+    SELECT id_paciente, nombre, email 
+    FROM paciente 
+    WHERE reset_token = ? AND reset_expires > NOW()
+    LIMIT 1
+  `;
+  const [rows] = await pool.query(sql, [token]);
+  return rows[0] || null;
+};
+
+// Limpiar token después de usarlo
+User.clearResetToken = async (id_paciente) => {
+  const sql = `UPDATE paciente SET reset_token = NULL, reset_expires = NULL WHERE id_paciente = ?`;
+  await pool.query(sql, [id_paciente]);
+  return true;
+};
+
+// Actualizar contraseña (si aún no lo tenías)
+User.updatePassword = async (id_paciente, newPassword) => {
+  const sql = `UPDATE paciente SET contrasena = ? WHERE id_paciente = ?`;
+  await pool.query(sql, [newPassword, id_paciente]);
+  return true;
+};
+
 export default User;

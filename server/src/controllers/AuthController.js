@@ -161,6 +161,11 @@ export const AuthController = {
 
       // Crear token temporal
       const token = crypto.randomBytes(20).toString("hex");
+      // 15 minutos a partir de ahora
+      const expires = new Date(Date.now() + 15 * 60 * 1000);
+      // Guarda token y expiración en BD
+      await User.saveResetToken(user.id_paciente, token, expires);
+      
       const resetLink = `https://midueloapp.com/reset-password?token=${token}`;
 
       // Configurar transporte SMTP de Hostinger
@@ -199,7 +204,33 @@ export const AuthController = {
       console.error("❌ Error en recoverPassword:", err);
       return res.status(500).json({ message: "Error al enviar el correo", error: err.message });
     }
+  },
+
+  // Aplicar nueva contraseña usando el token
+async resetPassword(req, res) {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Faltan datos" });
+      }
+
+      const user = await User.findByResetToken(token);
+      if (!user) {
+        return res.status(400).json({ message: "Token inválido o expirado" });
+      }
+
+      const hashed = await bcrypt.hash(newPassword, 10);
+      await User.updatePassword(user.id_paciente, hashed);
+      await User.clearResetToken(user.id_paciente);
+
+      return res.status(200).json({ message: "Contraseña restablecida correctamente" });
+    } catch (err) {
+      console.error("❌ Error en resetPassword:", err);
+      return res.status(500).json({ message: "Error al restablecer contraseña" });
+    }
   }
+
 
   
 };
