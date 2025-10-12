@@ -2,11 +2,22 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 
+function CalcularEdad(fechaNacimiento) {
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+      edad--;
+    }
+    return edad;
+  }
+
 export const AuthController = {
   // Registro de paciente
   async register(req, res) {
     try {
-      const {
+      let {
         nombre,
         apellido_paterno,
         apellido_materno,
@@ -16,28 +27,34 @@ export const AuthController = {
         password,
         codigo_psicologo,
       } = req.body;
-      
-      // LIMPIEZA DE DATOS
+
+      // 🔹 Limpieza de datos
       nombre = nombre?.trim();
       apellido_paterno = apellido_paterno?.trim();
       apellido_materno = apellido_materno?.trim();
       telefono = telefono?.trim();
-      email = email?.trim().toLowerCase(); // Quita espacios y pasa a minúsculas
+      email = email?.trim().toLowerCase();
       password = password?.trim();
       codigo_psicologo = codigo_psicologo?.trim();
 
-
+      // 🔹 Validar campos obligatorios
       if (!nombre || !apellido_paterno || !email || !password || !codigo_psicologo) {
         return res.status(400).json({ message: "Faltan datos obligatorios" });
       }
 
-      // Verificar que no exista ya
+      // 🔹 Validar edad mínima
+      const edad = calcularEdad(fecha_nacimiento);
+      if (edad < 18) {
+        return res.status(400).json({ message: "Debes ser mayor de 18 años para registrarte." });
+      }
+
+      // Verificar que no exista el usuario
       const existing = await User.findByEmail(email);
       if (existing) {
         return res.status(400).json({ message: "El correo ya está registrado" });
       }
 
-      // Encriptar contraseña
+      // 🔹 Encriptar contraseña
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Crear paciente
@@ -52,28 +69,22 @@ export const AuthController = {
         codigo_psicologo,
       });
 
-      // Generar token JWT
+      // Generar token
       const token = jwt.sign(
         { sub: newId, role: "paciente" },
         process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59",
         { expiresIn: "7d" }
       );
 
-      // Guardar token en la base de datos
       await User.saveSessionToken(newId, token);
 
       return res.status(201).json({
         message: "Paciente registrado exitosamente",
         token,
-        user: { 
-          id_paciente: newId, 
-          nombre, 
-          email,
-          session_token: token 
-        },
+        user: { id_paciente: newId, nombre, email, session_token: token },
       });
     } catch (err) {
-      console.error(" Error en register:", err);
+      console.error("Error en register:", err);
       return res.status(500).json({ message: "Error en el registro", error: err.message });
     }
   },
@@ -81,10 +92,6 @@ export const AuthController = {
   // Login de paciente
   async login(req, res) {
     try {
-      // LIMPIEZA DE DATOS
-      email = email?.trim().toLowerCase();
-      password = password?.trim();
-
       const { email, password } = req.body;
 
       if (!email || !password) {
