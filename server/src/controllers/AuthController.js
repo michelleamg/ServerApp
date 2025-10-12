@@ -161,7 +161,7 @@ async recoverPassword(req, res) {
       }
 
       // Crear token y expiración
-      const token = crypto.randomBytes(20).toString("hex");
+      const token = crypto.randomBytes(4).toString("hex");
       const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
       await User.saveResetToken(user.id_paciente, token, expires);
 
