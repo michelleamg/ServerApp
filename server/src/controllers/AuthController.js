@@ -141,5 +141,36 @@ export const AuthController = {
     } catch (error) {
       return res.status(401).json({ message: "Token inválido o expirado" });
     }
+  },
+
+    // Recuperación de contraseña
+  async recoverPassword(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "El correo es requerido" });
+      }
+
+      // Buscar al usuario por email
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "No existe una cuenta con este correo" });
+      }
+
+      // Aquí podrías generar un token temporal o un código de verificación
+      // De momento, simulamos que se envió el correo
+      console.log(`📧 Enlace de recuperación enviado a: ${email}`);
+
+      return res.status(200).json({ 
+        message: "Se ha enviado un enlace para restablecer tu contraseña al correo proporcionado." 
+      });
+
+    } catch (err) {
+      console.error("Error en recoverPassword:", err);
+      return res.status(500).json({ message: "Error en el servidor" });
+    }
   }
+
+  
 };
