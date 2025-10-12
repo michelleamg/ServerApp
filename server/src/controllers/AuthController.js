@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 export const AuthController = {
   // Registro de paciente
@@ -152,23 +154,50 @@ export const AuthController = {
         return res.status(400).json({ message: "El correo es requerido" });
       }
 
-      // Buscar al usuario por email
       const user = await User.findByEmail(email);
       if (!user) {
         return res.status(404).json({ message: "No existe una cuenta con este correo" });
       }
 
-      // Aquí podrías generar un token temporal o un código de verificación
-      // De momento, simulamos que se envió el correo
-      console.log(`📧 Enlace de recuperación enviado a: ${email}`);
+      // Crear token temporal
+      const token = crypto.randomBytes(20).toString("hex");
+      const resetLink = `https://midueloapp.com/reset-password?token=${token}`;
 
-      return res.status(200).json({ 
-        message: "Se ha enviado un enlace para restablecer tu contraseña al correo proporcionado." 
+      // Configurar transporte SMTP de Hostinger
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: true, // SSL
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
       });
 
+      // Enviar correo de recuperación
+      await transporter.sendMail({
+        from: `"MiDuelo Soporte" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: "Recuperación de contraseña - MiDuelo",
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color:#2E7D32;">Hola ${user.nombre || "usuario"},</h2>
+            <p>Has solicitado restablecer tu contraseña en <b>MiDuelo</b>.</p>
+            <p>Puedes hacerlo haciendo clic en el siguiente enlace:</p>
+            <a href="${resetLink}" style="background-color:#4CAF50;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">Restablecer contraseña</a>
+            <p style="margin-top:20px;">Si no solicitaste esto, puedes ignorar este mensaje.</p>
+            <hr/>
+            <p style="font-size:12px;color:#777;">© ${new Date().getFullYear()} MiDuelo. Todos los derechos reservados.</p>
+          </div>
+        `,
+      });
+
+      console.log(`📧 Correo de recuperación enviado a: ${email}`);
+      return res.status(200).json({ message: "Se ha enviado un enlace de recuperación a tu correo." });
+
     } catch (err) {
-      console.error("Error en recoverPassword:", err);
-      return res.status(500).json({ message: "Error en el servidor" });
+      console.error("❌ Error en recoverPassword:", err);
+      return res.status(500).json({ message: "Error al enviar el correo", error: err.message });
     }
   }
 
