@@ -177,6 +177,7 @@ async recoverPassword(req, res) {
       });
 
       // Enviar correo con token directamente
+      // Enviar correo con el token en texto verde
       await transporter.sendMail({
         from: `"MiDuelo Soporte" <${process.env.SMTP_USER}>`,
         to: email,
@@ -186,7 +187,16 @@ async recoverPassword(req, res) {
             <h2 style="color:#2E7D32;">Hola ${user.nombre || "usuario"},</h2>
             <p>Has solicitado restablecer tu contraseña en <b>MiDuelo</b>.</p>
             <p>Usa el siguiente código en la aplicación móvil para restablecer tu contraseña:</p>
-            <div style="background-color:#e8f5e9; padding:12px 20px; border-radius:8px; font-size:18px; font-weight:bold; display:inline-block; margin:10px 0;">
+            <div style="
+              background-color:#4CAF50;
+              color:#fff;
+              display:inline-block;
+              font-size:20px;
+              font-weight:bold;
+              padding:10px 25px;
+              border-radius:8px;
+              margin:15px 0;
+            ">
               ${token}
             </div>
             <p>Este código expirará en 15 minutos.</p>
@@ -197,14 +207,14 @@ async recoverPassword(req, res) {
         `,
       });
 
-      console.log(`📧 Token de recuperación enviado a: ${email} (${token})`);
-      return res.status(200).json({ message: "Se ha enviado el código de recuperación a tu correo." });
+      console.log(`📧 Token enviado a ${email}: ${token}`);
+      return res.status(200).json({ message: "Se ha enviado un código de recuperación a tu correo." });
 
     } catch (err) {
       console.error("❌ Error en recoverPassword:", err);
       return res.status(500).json({ message: "Error al enviar el correo", error: err.message });
     }
-  },
+},
 
 
   // Aplicar nueva contraseña usando el token
