@@ -16,6 +16,16 @@ export const AuthController = {
         password,
         codigo_psicologo,
       } = req.body;
+      
+      // LIMPIEZA DE DATOS
+      nombre = nombre?.trim();
+      apellido_paterno = apellido_paterno?.trim();
+      apellido_materno = apellido_materno?.trim();
+      telefono = telefono?.trim();
+      email = email?.trim().toLowerCase(); // Quita espacios y pasa a minúsculas
+      password = password?.trim();
+      codigo_psicologo = codigo_psicologo?.trim();
+
 
       if (!nombre || !apellido_paterno || !email || !password || !codigo_psicologo) {
         return res.status(400).json({ message: "Faltan datos obligatorios" });
@@ -71,6 +81,10 @@ export const AuthController = {
   // Login de paciente
   async login(req, res) {
     try {
+      // LIMPIEZA DE DATOS
+      email = email?.trim().toLowerCase();
+      password = password?.trim();
+
       const { email, password } = req.body;
 
       if (!email || !password) {
