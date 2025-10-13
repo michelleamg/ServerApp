@@ -30,4 +30,11 @@ export const TestModel = {
     const [rows] = await pool.query('SELECT id_test, nombre, descripcion FROM test');
     return rows;
   },
+  async applyTest(id_test, id_paciente, id_psicologo) {
+    const [result] = await pool.query(
+      'INSERT INTO test (nombre, descripcion) VALUES (?, ?)',
+      ['Inventario de Duelo de Texas (ITRD-16)', 'Evaluación del proceso de duelo con 10 preguntas divididas en comportamiento inicial y sentimientos actuales']
+    );
+    return result.insertId;
+  }
 };
