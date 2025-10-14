@@ -5,8 +5,16 @@ import morgan from "morgan";
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 👉 Servir archivos estáticos
+app.use("/docs", express.static(path.join(__dirname, "public/docs")));
 
 // Middlewares
 app.use(morgan("dev"));
