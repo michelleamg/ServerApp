@@ -1,98 +1,115 @@
-import { TestModel } from '../models/testModel.js';
-import { questions } from '../models/questions.js';
+import db from '../db/db.js';
+import { Test } from '../models/TestResult.js';
 
-export function listQuestions(req, res) {
-  res.json({ questions });
-}
-
-export async function startTest(req, res) {
-  try {
-    const { id_test, id_paciente, id_psicologo } = req.body;
-    if (!id_test || !id_paciente || !id_psicologo) {
-      return res.status(400).json({ message: 'Faltan parámetros para iniciar el test' });
-    }
-    const id_aplicacion = await TestModel.createApplication(id_test, id_paciente, id_psicologo);
-    res.status(201).json({ id_aplicacion });
-  } catch (error) {
-    console.error('Error al iniciar test:', error);
-    res.status(500).json({ message: 'Error al iniciar el test', error: error.message });
-  }
-}
-
-export async function submitTest(req, res) {
-  try {
-    const { id_aplicacion } = req.params;
-    const { userId, answers } = req.body;
-    
-    if (!id_aplicacion || !userId || !answers) {
-      return res.status(400).json({ message: 'Faltan parámetros requeridos' });
-    }
-
-    if (!Array.isArray(answers)) {
-      return res.status(400).json({ message: 'Answers debe ser un array' });
-    }
-
-    if (answers.length !== questions.length) {
-      return res.status(400).json({ 
-        message: `Se esperan ${questions.length} respuestas, recibidas: ${answers.length}` 
+export const testController = {
+  // Obtener preguntas del test
+  getQuestions: async (req, res) => {
+    try {
+      console.log('📋 Solicitando preguntas del test');
+      const questions = Test.getQuestions();
+      
+      res.json({ 
+        success: true,
+        questions 
+      });
+      
+    } catch (error) {
+      console.error('❌ Error en getQuestions:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Error al obtener preguntas' 
       });
     }
+  },
 
-    // Convertir respuestas del frontend al formato del backend
-    const respuestaObjects = answers.map(answer => {
-      const question = questions.find(q => q.id === answer.questionId);
-      return {
-        pregunta: question ? question.text : `Pregunta ${answer.questionId}`,
-        respuesta: answer.value.toString()
-      };
-    });
-
-    // Calcular puntajes por sección
-    const initialAnswers = answers.filter(a => {
-      const question = questions.find(q => q.id === a.questionId);
-      return question && question.section === 'initial';
-    });
+  // Guardar resultados del test
+  saveResults: async (req, res) => {
+    const connection = await db.getConnection();
     
-    const currentAnswers = answers.filter(a => {
-      const question = questions.find(q => q.id === a.questionId);
-      return question && question.section === 'current';
-    });
+    try {
+      await connection.beginTransaction();
+      
+      const { 
+        userId,           // id_paciente
+        answers,          // respuestas
+        initialScore, 
+        currentScore, 
+        griefType         // interpretación
+      } = req.body;
 
-    const initialScore = initialAnswers.length > 0 
-      ? initialAnswers.reduce((sum, a) => sum + a.value, 0) / initialAnswers.length 
-      : 0;
-    
-    const currentScore = currentAnswers.length > 0 
-      ? currentAnswers.reduce((sum, a) => sum + a.value, 0) / currentAnswers.length 
-      : 0;
+      console.log('💾 Guardando resultados para usuario:', userId);
 
-    // Determinar tipo de duelo
-    let griefType;
-    if (initialScore >= 3.5 && currentScore <= 2.5) {
-      griefType = 'resolved';
-    } else if (initialScore >= 3.5 && currentScore >= 3.5) {
-      griefType = 'prolonged';
-    } else if (initialScore <= 2.5 && currentScore >= 3.5) {
-      griefType = 'delayed';
-    } else {
-      griefType = 'absent';
+      // Validaciones
+      if (!userId || !answers || !Array.isArray(answers)) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Datos incompletos: userId y answers son requeridos' 
+        });
+      }
+
+      // 1. Crear aplicación de test
+      const id_aplicacion = await Test.createApplication(1, userId);
+      console.log('✅ Aplicación creada ID:', id_aplicacion);
+
+      // 2. Guardar respuestas
+      for (const answer of answers) {
+        const preguntaTexto = Test.getQuestionText(answer.questionId);
+        await Test.saveAnswer(id_aplicacion, preguntaTexto, answer.value.toString());
+      }
+      console.log('✅ Respuestas guardadas:', answers.length);
+
+      // 3. Calcular puntaje total y guardar resultado
+      const puntajeTotal = Math.round((initialScore + currentScore) / 2);
+      await Test.saveResult(id_aplicacion, puntajeTotal, griefType);
+      console.log('✅ Resultado guardado - Puntaje:', puntajeTotal);
+
+      await connection.commit();
+      
+      res.json({ 
+        success: true, 
+        id_aplicacion,
+        message: 'Test guardado exitosamente',
+        data: {
+          pacienteId: userId,
+          respuestasGuardadas: answers.length,
+          puntajeTotal,
+          tipoDuelo: griefType
+        }
+      });
+
+    } catch (error) {
+      await connection.rollback();
+      console.error('❌ Error en saveResults:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Error interno del servidor',
+        detalle: error.message 
+      });
+    } finally {
+      connection.release();
     }
+  },
 
-    const total = answers.reduce((acc, a) => acc + a.value, 0);
-    
-    await TestModel.saveResponses(id_aplicacion, respuestaObjects);
-    await TestModel.saveResult(id_aplicacion, total, griefType);
-    
-    res.json({ 
-      total, 
-      griefType,
-      initialScore: parseFloat(initialScore.toFixed(2)),
-      currentScore: parseFloat(currentScore.toFixed(2)),
-      message: "Test completado exitosamente"
-    });
-    
-  } catch (error) {
-    console.error('Error al enviar respuestas:', error);
-    res.status(500).json({ message: 'Error al procesar el test', error: error.message });
+  // Obtener historial de tests
+  getHistory: async (req, res) => {
+    try {
+      const { id_paciente } = req.params;
+      console.log('📊 Solicitando historial para paciente:', id_paciente);
+      
+      // Aquí puedes implementar la consulta del historial
+      res.json({ 
+        success: true,
+        message: 'Historial obtenido',
+        pacienteId: id_paciente
+      });
+      
+    } catch (error) {
+      console.error('❌ Error en getHistory:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Error al obtener historial' 
+      });
+    }
   }
-}
+};
+
