@@ -1,0 +1,22 @@
+
+export const questions = [
+  { id: 1, text: 'Siento una fuerte añoranza o deseo por la persona fallecida.' },
+  { id: 2, text: 'Tengo dificultad para aceptar la muerte de esa persona.' },
+  { id: 3, text: 'Siento incredulidad o aturdimiento por su pérdida.' },
+  { id: 4, text: 'Me siento vacío/a o sin sentido desde su fallecimiento.' },
+  { id: 5, text: 'Evito lugares, personas o actividades que me recuerdan la pérdida.' },
+  { id: 6, text: 'Me siento amargado/a o resentido/a por su muerte.' },
+  { id: 7, text: 'Siento que la vida está vacía sin él/ella.' },
+  { id: 8, text: 'Me cuesta confiar en otras personas desde su pérdida.' },
+  { id: 9, text: 'Tengo dificultad para reanudar actividades normales.' },
+  { id: 10, text: 'Siento que parte de mí ha muerto junto con él/ella.' },
+  { id: 11, text: 'Me sorprendo buscando a la persona fallecida en lugares familiares.' },
+  { id: 12, text: 'Siento que no tengo control sobre mi vida desde su partida.' },
+  { id: 13, text: 'Me veo obligado/a a pensar en la persona fallecida contra mi voluntad.' },
+  { id: 14, text: 'Evito hablar de la persona fallecida para no sentir dolor.' },
+  { id: 15, text: 'Me siento culpable por cosas que hice o no hice con la persona fallecida.' },
+  { id: 16, text: 'Tengo dificultad para volver a sentir alegría o satisfacción.' },
+  { id: 17, text: 'Me siento irritado/a o enfadado/a sin una razón clara.' },
+  { id: 18, text: 'Me siento desconectado/a de otras personas desde su pérdida.' },
+  { id: 19, text: 'Pienso que la pérdida debería haberme pasado a mí y no a él/ella.' },
+];

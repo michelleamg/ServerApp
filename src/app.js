@@ -5,6 +5,7 @@ import morgan from "morgan";
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
+import testRoutes from "./routes/test.routes.js";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.disable("x-powered-by");
 app.use("/api", authRoutes);
 app.use("/api", indexRoutes);
 app.use("/api/consentimientos", consentimientoRoutes);
+app.use("/api/tests", testRoutes);
 
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
