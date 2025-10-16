@@ -1,11 +1,20 @@
-// src/routes/test.routes.js
-import { Router } from 'express';
-import { listQuestions, startTest, submitTest } from '../controllers/test.controller.js';
+import express from "express";
+import { testController} from "../controllers/testController.js";
+const router = express.Router();
 
-const router = Router();
+// @desc    Obtener preguntas del test
+// @route   GET /api/tests/questions
+// @access  Public
+router.get("/questions", testController.getQuestions);
 
-router.get('/questions', listQuestions);
-router.post('/start', startTest);
-router.post('/:id_aplicacion/submit', submitTest);
+// @desc    Guardar resultados del test
+// @route   POST /api/tests/results
+// @access  Public
+router.post("/results", testController.saveResults);
+
+// @desc    Obtener historial de tests
+// @route   GET /api/tests/history/:id_paciente
+// @access  Public
+router.get("/history/:id_paciente", testController.getHistory);
 
 export default router;
