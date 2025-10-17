@@ -54,7 +54,7 @@ export const testController = {
       // 2. Guardar respuestas
       for (const answer of answers) {
         const preguntaTexto = Test.getQuestionText(answer.questionId);
-        await Test.saveAnswer(id_aplicacion, preguntaTexto, answer.value.toString());
+        await Test.saveAnswer(id_aplicacion, answer.questionId, preguntaTexto, answer.value.toString());
       }
       console.log('✅ Respuestas guardadas:', answers.length);
 
