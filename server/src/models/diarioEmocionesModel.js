@@ -26,4 +26,14 @@ DiarioEmociones.findByPacienteAndMonth = async (id_paciente, year, month) => {
   return rows;
 };
 
+// 🔹 (opcional) Obtener última emoción del paciente
+DiarioEmociones.findUltima = async (id_paciente) => {
+  const sql = `
+    SELECT DATE(MAX(fecha)) AS ultima_emocion
+    FROM diario_emociones
+    WHERE id_paciente = ?
+  `;
+  const [rows] = await pool.query(sql, [id_paciente]);
+  return rows[0]?.ultima_emocion || null;
+};
 export default DiarioEmociones;
