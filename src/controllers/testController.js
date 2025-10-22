@@ -1,4 +1,4 @@
-import db from '../db/db.js';
+import pool from '../db/db.js';
 import { Test } from '../models/TestResult.js';
 
 export const testController = {
@@ -24,7 +24,7 @@ export const testController = {
 
   // Guardar resultados del test
   saveResults: async (req, res) => {
-    const connection = await db.getConnection();
+    const connection = await pool.getConnection();
     
     try {
       await connection.beginTransaction();
