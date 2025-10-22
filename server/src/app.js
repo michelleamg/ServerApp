@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import diarioEmocionesRoutes from "./routes/diarioEmociones.routes.js";
+
 
 const app = express();
 
@@ -27,6 +29,7 @@ app.disable("x-powered-by");
 app.use("/api", authRoutes);
 app.use("/api", indexRoutes);
 app.use("/api/consentimientos", consentimientoRoutes);
+app.use("/api/diario-emociones", diarioEmocionesRoutes);
 
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
