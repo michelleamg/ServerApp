@@ -67,5 +67,35 @@ export const Test = {
       { id: 9, section: "current", text: "Actualmente todavía me cuesta relacionarme con algunas personas." },
       { id: 10, section: "current", text: "Actualmente me cuesta concentrarme en mi trabajo." }
     ];
+  },
+
+ async checkIfCompleted(id_paciente) {
+  try {
+    const [rows] = await pool.execute(
+      `
+      SELECT estado
+      FROM aplicacion_test
+      WHERE id_paciente = ?
+      ORDER BY fecha_creacion DESC
+      LIMIT 1
+      `,
+      [id_paciente]
+    );
+
+    if (rows.length === 0) {
+      console.log("ℹ️ No hay registros de tests para este paciente.");
+      return false;
+    }
+
+    const estado = rows[0].estado?.toLowerCase() || "";
+    console.log(`🧾 Último estado encontrado: ${estado}`);
+
+    return estado === "completado"; // 👈 coincide con tu enum en español
+  } catch (error) {
+    console.error("❌ Error en checkIfCompleted:", error);
+    return false;
   }
+},
+
+
 };

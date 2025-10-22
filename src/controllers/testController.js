@@ -63,6 +63,14 @@ export const testController = {
       await Test.saveResult(id_aplicacion, puntajeTotal, griefType);
       console.log('✅ Resultado guardado - Puntaje:', puntajeTotal);
 
+      // 🟢 Nuevo paso: actualizar estado a 'completado'
+      await pool.execute(
+        "UPDATE aplicacion_test SET estado = 'completado' WHERE id_aplicacion = ?",
+        [id_aplicacion]
+      );
+      console.log("🟢 Estado actualizado a 'completado' para:", id_aplicacion);
+
+
       await connection.commit();
       
       res.json({ 
@@ -95,8 +103,7 @@ export const testController = {
     try {
       const { id_paciente } = req.params;
       console.log('📊 Solicitando historial para paciente:', id_paciente);
-      
-      // Aquí puedes implementar la consulta del historial
+    
       res.json({ 
         success: true,
         message: 'Historial obtenido',
@@ -110,6 +117,22 @@ export const testController = {
         error: 'Error al obtener historial' 
       });
     }
-  }
+  },
+
+    getCompletedTest: async (req, res) => {
+    const { id_paciente } = req.params;
+
+    try {
+      console.log("🔍 Verificando test completado para paciente:", id_paciente);
+
+      const hasCompletedTest = await Test.checkIfCompleted(id_paciente);
+
+      res.json({ hasCompletedTest}); // true o false
+    } catch (error) {
+      console.error("❌ Error en getCompletedTest:", error);
+      res.status(500).json({ hasCompletedTest: false });
+    }
+  },
+
 };
 
