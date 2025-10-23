@@ -2,7 +2,56 @@
 import pool from "../db/db.js";
 
 export const AgendaController = {
-  // Obtener todas las semanas disponibles del psicólogo
+  // 🔹 Obtener semanas disponibles del psicólogo vinculado al paciente
+  async getSemanasPorPaciente(req, res) {
+    try {
+      const { id_paciente } = req.params;
+
+      if (!id_paciente) {
+        return res.status(400).json({ message: "Falta el id_paciente" });
+      }
+
+      // 1️⃣ Obtener el id_psicologo vinculado al paciente
+      const [pacienteRows] = await pool.query(
+        "SELECT id_psicologo FROM paciente WHERE id_paciente = ? LIMIT 1",
+        [id_paciente]
+      );
+
+      if (pacienteRows.length === 0) {
+        return res.status(404).json({ message: "Paciente no encontrado" });
+      }
+
+      const id_psicologo = pacienteRows[0].id_psicologo;
+
+      // 2️⃣ Consultar semanas (agenda) de ese psicólogo
+      const [semanas] = await pool.query(
+        `SELECT id_agenda, semana_inicio, semana_fin
+         FROM agenda
+         WHERE id_psicologo = ?
+         ORDER BY semana_inicio ASC`,
+        [id_psicologo]
+      );
+
+      // 3️⃣ Para cada semana, traer citas relacionadas
+      for (const semana of semanas) {
+        const [citas] = await pool.query(
+          `SELECT id_cita, fecha, hora_inicio, hora_fin, modalidad, estado
+           FROM cita
+           WHERE id_agenda = ?
+           ORDER BY fecha, hora_inicio`,
+          [semana.id_agenda]
+        );
+        semana.citas = citas;
+      }
+
+      return res.status(200).json({ id_psicologo, semanas });
+    } catch (error) {
+      console.error("❌ Error en getSemanasPorPaciente:", error);
+      return res.status(500).json({ message: "Error al obtener agenda", error });
+    }
+  },
+
+  // 🔹 Obtener todas las semanas de un psicólogo específico
   async getSemanas(req, res) {
     try {
       const { id_psicologo } = req.params;
@@ -17,12 +66,12 @@ export const AgendaController = {
     }
   },
 
-  // Obtener citas dentro de una semana específica
+  // 🔹 Obtener citas dentro de una semana específica
   async getCitasSemana(req, res) {
     try {
       const { id_agenda } = req.params;
       const [rows] = await pool.query(
-        `SELECT id_cita, fecha, hora_inicio, hora_fin, modalidad, estado 
+        `SELECT id_cita, fecha, hora_inicio, hora_fin, modalidad, estado
          FROM cita 
          WHERE id_agenda = ?
          ORDER BY fecha, hora_inicio`,
@@ -35,7 +84,7 @@ export const AgendaController = {
     }
   },
 
-  // Solicitar una nueva cita
+  // 🔹 Solicitar nueva cita
   async solicitarCita(req, res) {
     try {
       const { id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad } = req.body;
@@ -47,7 +96,7 @@ export const AgendaController = {
       const [result] = await pool.query(
         `INSERT INTO cita (id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad, estado)
          VALUES (?, ?, ?, ?, ?, ?, 'pendiente')`,
-        [id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad || "virtual"]
+        [id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad || "En línea"]
       );
 
       res.status(201).json({
@@ -59,45 +108,4 @@ export const AgendaController = {
       res.status(500).json({ message: "Error al solicitar cita", error });
     }
   },
-
-  // Obtener las semanas disponibles del psicólogo vinculado al paciente
-async getSemanasPorPaciente(req, res) {
-    try {
-      const { id_paciente } = req.params;
-
-      if (!id_paciente) {
-        return res.status(400).json({ message: "Falta el id_paciente" });
-      }
-
-      // 1️⃣ Buscar el id_psicologo vinculado al paciente
-      const [pacienteRows] = await pool.query(
-        "SELECT id_psicologo FROM paciente WHERE id_paciente = ? LIMIT 1",
-        [id_paciente]
-      );
-
-      if (pacienteRows.length === 0) {
-        return res.status(404).json({ message: "Paciente no encontrado" });
-      }
-
-      const id_psicologo = pacienteRows[0].id_psicologo;
-
-      // 2️⃣ Consultar la agenda de ese psicólogo
-      const [agendaRows] = await pool.query(
-        `SELECT * 
-        FROM agenda 
-        WHERE id_psicologo = ?
-        ORDER BY semana_inicio ASC`,
-        [id_psicologo]
-      );
-
-      res.status(200).json({
-        id_psicologo,
-        semanas: agendaRows,
-      });
-    } catch (error) {
-      console.error("❌ Error en getSemanasPorPaciente:", error);
-      res.status(500).json({ message: "Error al obtener la agenda del paciente", error });
-    }
-  }
-
 };
