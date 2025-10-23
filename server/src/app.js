@@ -25,7 +25,7 @@ app.disable("x-powered-by");
 app.use("/api", authRoutes);
 app.use("/api", indexRoutes);
 app.use("/api/consentimientos", consentimientoRoutes);
-
+app.use("/api/agenda", agendaRoutes);
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong", timestamp: new Date() });
