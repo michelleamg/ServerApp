@@ -2,6 +2,8 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
