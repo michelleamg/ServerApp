@@ -1,15 +1,15 @@
-// src/routes/agenda.routes.js
+// routes/agenda.routes.js
 import express from "express";
 import { AgendaController } from "../controllers/agendaController.js";
 
 const router = express.Router();
 
-// 🔹 Nueva ruta para agenda del paciente
+// 🆕 Esta debe ir primero para que no sea “tapada” por :id_psicologo
 router.get("/paciente/:id_paciente", AgendaController.getSemanasPorPaciente);
 
-// Rutas que ya tenías
-router.get("/semanas/:id_psicologo", AgendaController.getSemanas);
+// Luego las rutas generales
+router.get("/:id_psicologo", AgendaController.getSemanas);
 router.get("/citas/:id_agenda", AgendaController.getCitasSemana);
-router.post("/solicitar", AgendaController.solicitarCita);
+router.post("/citas/solicitar", AgendaController.solicitarCita);
 
 export default router;
