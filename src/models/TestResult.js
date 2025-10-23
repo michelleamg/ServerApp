@@ -1,22 +1,34 @@
 import pool from '../db/db.js';
 
 export const Test = {
-      createApplication: async (id_test, id_paciente) => {
-    // Primero obtener el id_psicologo del paciente
-    const [pacienteRows] = await pool.execute(
-      'SELECT id_psicologo FROM paciente WHERE id_paciente = ?',
-      [id_paciente]
-    );
-    
-    const id_psicologo = pacienteRows[0]?.id_psicologo || 1; // Usar 1 como default si no tiene
+  createApplication: async (id_test, id_paciente, tipo = 'inicial') => {
+  // 1️⃣ Validar si ya existe un test inicial completado
+  const [existing] = await pool.execute(
+    `SELECT id_aplicacion FROM aplicacion_test 
+     WHERE id_paciente = ? AND tipo = 'inicial' AND estado = 'completado'`,
+    [id_paciente]
+  );
 
-    const [result] = await pool.execute(
-      `INSERT INTO aplicacion_test (id_test, id_paciente, id_psicologo, fecha) 
-       VALUES (?, ?, ?, NOW())`,
-      [id_test, id_paciente, id_psicologo]
-    );
-    return result.insertId;
-  },
+  if (existing.length > 0 && tipo === 'inicial') {
+    throw new Error("El paciente ya completó el test inicial.");
+  }
+
+  // 2️⃣ Obtener psicólogo
+  const [pacienteRows] = await pool.execute(
+    'SELECT id_psicologo FROM paciente WHERE id_paciente = ?',
+    [id_paciente]
+  );
+  const id_psicologo = pacienteRows[0]?.id_psicologo || 1;
+
+  // 3️⃣ Insertar nuevo registro
+  const [result] = await pool.execute(
+    `INSERT INTO aplicacion_test (id_test, id_paciente, id_psicologo, fecha, tipo) 
+     VALUES (?, ?, ?, NOW(), ?)`,
+    [id_test, id_paciente, id_psicologo, tipo]
+  );
+  return result.insertId;
+},
+
 
   // Guardar respuesta individual
   saveAnswer: async (id_aplicacion, questionId, pregunta, respuesta) => {
@@ -75,7 +87,7 @@ export const Test = {
       `
       SELECT estado
       FROM aplicacion_test
-      WHERE id_paciente = ?
+      WHERE id_paciente = ? AND tipo = 'inicial'
       ORDER BY fecha_creacion DESC
       LIMIT 1
       `,
@@ -83,19 +95,18 @@ export const Test = {
     );
 
     if (rows.length === 0) {
-      console.log("ℹ️ No hay registros de tests para este paciente.");
+      console.log("ℹ️ No hay tests iniciales previos para este paciente.");
       return false;
     }
 
     const estado = rows[0].estado?.toLowerCase() || "";
-    console.log(`🧾 Último estado encontrado: ${estado}`);
+    console.log(`🧾 Último estado del test inicial: ${estado}`);
 
-    return estado === "completado"; // 👈 coincide con tu enum en español
+    return estado === "completado";
   } catch (error) {
     console.error("❌ Error en checkIfCompleted:", error);
     return false;
   }
 },
-
 
 };

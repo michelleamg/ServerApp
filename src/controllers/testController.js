@@ -46,9 +46,10 @@ export const testController = {
           error: 'Datos incompletos: userId y answers son requeridos' 
         });
       }
+      
 
       // 1. Crear aplicación de test
-      const id_aplicacion = await Test.createApplication(1, userId);
+      const id_aplicacion = await Test.createApplication(1, userId, 'inicial');
       console.log('✅ Aplicación creada ID:', id_aplicacion);
 
       // 2. Guardar respuestas
@@ -69,8 +70,6 @@ export const testController = {
         [id_aplicacion]
       );
       console.log("🟢 Estado actualizado a 'completado' para:", id_aplicacion);
-
-
       await connection.commit();
       
       res.json({ 
@@ -84,17 +83,18 @@ export const testController = {
           tipoDuelo: griefType
         }
       });
-
-    } catch (error) {
+     } catch (error) {
       await connection.rollback();
+
+      if (error.message.includes("ya completó el test inicial")) {
+        return res.status(400).json({
+          success: false,
+          error: "El paciente ya completó el test inicial y no puede repetirlo."
+        });
+      }
+
       console.error('❌ Error en saveResults:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Error interno del servidor',
-        detalle: error.message 
-      });
-    } finally {
-      connection.release();
+      res.status(500).json({ success: false, error: 'Error interno del servidor' });
     }
   },
 
