@@ -5,10 +5,6 @@ import morgan from "morgan";
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
-import path from "path";
-import { fileURLToPath } from "url";
-import diarioEmocionesRoutes from "./routes/diarioEmociones.routes.js";
-import agendaRoutes from "./routes/agenda.routes.js";
 
 const app = express();
 
@@ -29,8 +25,6 @@ app.disable("x-powered-by");
 app.use("/api", authRoutes);
 app.use("/api", indexRoutes);
 app.use("/api/consentimientos", consentimientoRoutes);
-app.use("/api/diario-emociones", diarioEmocionesRoutes);
-app.use("/api/agenda", agendaRoutes);
 
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {

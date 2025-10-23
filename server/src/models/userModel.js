@@ -1,4 +1,3 @@
-// models/userModel.js
 import pool from '../db/db.js';
 
 const User = {};
@@ -62,7 +61,7 @@ User.create = async (data) => {
   return result.insertId;
 };
 
-// 🔥 CORREGIDO: Usar los nombres correctos de las columnas
+//Usar los nombres correctos de las columnas
 User.saveSessionToken = async (id_paciente, token) => {
   const sql = `
     UPDATE paciente 
