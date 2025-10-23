@@ -5,6 +5,7 @@ import morgan from "morgan";
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
+import agendaRoutes from "./routes/agenda.routes.js";
 
 const app = express();
 
@@ -34,6 +35,11 @@ app.get("/api/ping", (req, res) => {
 // Manejo de errores para rutas no encontradas
 app.use((req, res) => {
   res.status(404).json({ message: "Ruta no encontrada: " + req.url });
+});
+
+const PORT = process.env.PORT || 4001;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor móvil corriendo en el puerto ${PORT}`);
 });
 
 export default app;
