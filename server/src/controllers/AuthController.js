@@ -209,12 +209,12 @@ export const AuthController = {
 
       // 5️⃣ Enviar correo real
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
+        host: SMTP_HOST,
+        port: SMTP_PORT,
         secure: true, // ✅ Hostinger usa SSL en 465
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+          user: SMTP_USER,
+          pass: SMTP_PASS,
         },
         tls: {
           rejectUnauthorized: false, // ⚠️ solo si usas un certificado autofirmado en tu VM
