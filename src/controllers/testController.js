@@ -133,6 +133,35 @@ export const testController = {
       res.status(500).json({ hasCompletedTest: false });
     }
   },
+    // ✅ Obtener el último resultado del test
+    getLastResult: async (req, res) => {
+      const { id_paciente } = req.params;
+
+      try {
+        console.log("📊 Consultando último resultado para paciente:", id_paciente);
+
+        const result = await Test.getLastResult(id_paciente);
+
+        if (!result) {
+          return res.status(404).json({
+            success: false,
+            message: "No se encontraron resultados para este paciente.",
+          });
+        }
+
+        res.json({
+          success: true,
+          result,
+        });
+      } catch (error) {
+        console.error("❌ Error en getLastResult:", error);
+        res.status(500).json({
+          success: false,
+          error: "Error al obtener el resultado del test.",
+        });
+      }
+    },
+
 
 };
 

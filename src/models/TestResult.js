@@ -81,32 +81,54 @@ export const Test = {
     ];
   },
 
- async checkIfCompleted(id_paciente) {
-  try {
+  async checkIfCompleted(id_paciente) {
+    try {
+      const [rows] = await pool.execute(
+        `
+        SELECT estado
+        FROM aplicacion_test
+        WHERE id_paciente = ? AND tipo = 'inicial'
+        ORDER BY fecha_creacion DESC
+        LIMIT 1
+        `,
+        [id_paciente]
+      );
+
+      if (rows.length === 0) {
+        console.log("ℹ️ No hay tests iniciales previos para este paciente.");
+        return false;
+      }
+
+      const estado = rows[0].estado?.toLowerCase() || "";
+      console.log(`🧾 Último estado del test inicial: ${estado}`);
+
+      return estado === "completado";
+    } catch (error) {
+      console.error("❌ Error en checkIfCompleted:", error);
+      return false;
+    }
+  },
+
+    // ✅ Obtener el último resultado del test de un paciente
+  getLastResult: async (id_paciente) => {
     const [rows] = await pool.execute(
       `
-      SELECT estado
-      FROM aplicacion_test
-      WHERE id_paciente = ? AND tipo = 'inicial'
-      ORDER BY fecha_creacion DESC
+      SELECT 
+        r.id_resultado,
+        r.puntaje_total,
+        r.interpretacion,
+        a.fecha,
+        a.estado
+      FROM resultado_test r
+      INNER JOIN aplicacion_test a ON r.id_aplicacion = a.id_aplicacion
+      WHERE a.id_paciente = ?
+      ORDER BY a.fecha DESC
       LIMIT 1
       `,
       [id_paciente]
     );
 
-    if (rows.length === 0) {
-      console.log("ℹ️ No hay tests iniciales previos para este paciente.");
-      return false;
-    }
-
-    const estado = rows[0].estado?.toLowerCase() || "";
-    console.log(`🧾 Último estado del test inicial: ${estado}`);
-
-    return estado === "completado";
-  } catch (error) {
-    console.error("❌ Error en checkIfCompleted:", error);
-    return false;
-  }
-},
+    return rows[0] || null;
+  },
 
 };

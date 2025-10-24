@@ -1,17 +1,17 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
+import User from "../models/userModel.js"
 
-function CalcularEdad(fechaNacimiento) {
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-    return edad;
+function calcularEdad(fechaNacimiento) {
+  const hoy = new Date();
+  const fecha = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - fecha.getFullYear();
+  const mes = hoy.getMonth() - fecha.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) {
+    edad--;
   }
+  return edad;
+}
 
 export const AuthController = {
   // Registro de paciente
@@ -81,8 +81,15 @@ export const AuthController = {
       return res.status(201).json({
         message: "Paciente registrado exitosamente",
         token,
-        user: { id_paciente: newId, nombre, email, session_token: token },
+        id_paciente: newId, // 🟢 agregado para el front
+        user: {
+          id_paciente: newId,
+          nombre,
+          email,
+          session_token: token,
+        },
       });
+
     } catch (err) {
       console.error("Error en register:", err);
       return res.status(500).json({ message: "Error en el registro", error: err.message });
@@ -163,4 +170,6 @@ export const AuthController = {
       return res.status(401).json({ message: "Token inválido o expirado" });
     }
   }
+
+  
 };
