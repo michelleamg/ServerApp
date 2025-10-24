@@ -2,12 +2,21 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+import path from "path";              // ✅ <-- esta línea es la que faltaba
+import { fileURLToPath } from "url";  // ✅ <-- esta ya la tienes
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
 import testRoutes from "./routes/test.routes.js";
+import pacientesRoutes from "./routes/pacientes.routes.js";
+
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+
 
 // Middlewares
 app.use(morgan("dev"));
@@ -16,11 +25,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.disable("x-powered-by"); 
 
+
 // Rutas
 app.use("/api", authRoutes);
 app.use("/api", indexRoutes);
 app.use("/api/consentimientos", consentimientoRoutes);
 app.use("/api/tests", testRoutes);
+app.use("/api/pacientes",pacientesRoutes)
 
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
