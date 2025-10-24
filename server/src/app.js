@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import indexRoutes from "./routes/index.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import consentimientoRoutes from "./routes/consentimiento.routes.js";
+import testRoutes from "./routes/test.routes.js"
 import agendaRoutes from "./routes/agenda.routes.js";
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api", authRoutes);
 app.use("/api", indexRoutes);
 app.use("/api/consentimientos", consentimientoRoutes);
 app.use("/api/agenda", agendaRoutes);
+app.use("/api/tests", testRoutes);
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong", timestamp: new Date() });
