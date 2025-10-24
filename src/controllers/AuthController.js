@@ -201,44 +201,24 @@ export const AuthController = {
       // 2️⃣ Guardar token en la BD
       await User.saveVerificationToken(id_paciente, hashedToken);
 
-      console.log("SMTP_USER:", SMTP_USER);
-      console.log("SMTP_PASS:", SMTP_PASS ? "✅ existe" : "❌ vacío");
-
-
-      // 3️⃣ Configurar SMTP de Hostinger
-      const transporter = nodemailer.createTransport({
-        host: SMTP_HOST || "smtp.hostinger.com",
-        port: SMTP_PORT || 465,
-        secure: true, // 465 requiere SSL
-        auth: {
-          user:SMTP_USER,
-          pass: SMTP_PASS,
-        },
-        tls: {
-          rejectUnauthorized: false, // ✅ evita error de certificado en local
-        },
-      });
 
       // 4️⃣ Enlace con token visible (hash no se manda)
-      const verifyUrl = `http://192.168.1.80:3000/api/verify/${encodeURIComponent(
+      const verifyUrl = `https://api-mobile.midueloapp.com/api/verify/${encodeURIComponent(
         rawToken
       )}`;
 
       // 5️⃣ Enviar correo real
-      await transporter.sendMail({
-        from: `"MiDueloApp 💚" <${SMTP_USER}>`,
-        to: email,
-        subject: "Verifica tu cuenta en MiDueloApp",
-        html: `
-          <h2>¡Hola ${nombre || "usuario"}!</h2>
-          <p>Gracias por registrarte en <b>MiDueloApp</b>.</p>
-          <p>Confirma tu cuenta haciendo clic en el siguiente botón:</p>
-          <a href="${verifyUrl}" 
-             style="background:#2F5249;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
-             Verificar mi correo
-          </a>
-          <p>Este enlace expirará en 24 horas.</p>
-        `,
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: true, // ✅ Hostinger usa SSL en 465
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false, // ⚠️ solo si usas un certificado autofirmado en tu VM
+        },
       });
 
       return res
