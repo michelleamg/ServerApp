@@ -185,52 +185,60 @@ export const AuthController = {
   // 🔹 Enviar correo de verificación (seguro)
   // ============================================================
   async sendVerificationEmail(req, res) {
-    try {
-      const { id_paciente, email, nombre } = req.body;
+  try {
+    const { id_paciente, email, nombre } = req.body;
 
-      if (!id_paciente || !email) {
-        return res
-          .status(400)
-          .json({ message: "Faltan datos para enviar el correo." });
-      }
-
-      // 1️⃣ Generar token aleatorio y hashearlo para guardarlo seguro
-      const rawToken = crypto.randomBytes(40).toString("hex");
-      const hashedToken = await bcrypt.hash(rawToken, 10);
-
-      // 2️⃣ Guardar token en la BD
-      await User.saveVerificationToken(id_paciente, hashedToken);
-
-
-      // 4️⃣ Enlace con token visible (hash no se manda)
-      const verifyUrl = `https://api-mobile.midueloapp.com/api/verify/${encodeURIComponent(
-        rawToken
-      )}`;
-
-      // 5️⃣ Enviar correo real
-      const transporter = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        secure: true, // ✅ Hostinger usa SSL en 465
-        auth: {
-          user: SMTP_USER,
-          pass: SMTP_PASS,
-        },
-        tls: {
-          rejectUnauthorized: false, // ⚠️ solo si usas un certificado autofirmado en tu VM
-        },
-      });
-
-      return res
-        .status(200)
-        .json({ message: "Correo de verificación enviado correctamente." });
-    } catch (err) {
-      console.error("❌ Error en sendVerificationEmail:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al enviar correo de verificación." });
+    if (!id_paciente || !email) {
+      return res.status(400).json({ message: "Faltan datos para enviar el correo." });
     }
-  },
+
+    // 1️⃣ Generar token aleatorio y hashearlo para guardarlo seguro
+    const rawToken = crypto.randomBytes(40).toString("hex");
+    const hashedToken = await bcrypt.hash(rawToken, 10);
+
+    // 2️⃣ Guardar token en la BD
+    await User.saveVerificationToken(id_paciente, hashedToken);
+
+    // 3️⃣ Crear enlace de verificación
+    const verifyUrl = `https://api-mobile.midueloapp.com/api/verify/${encodeURIComponent(rawToken)}`;
+
+    // 4️⃣ Configurar transporte SMTP
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "smtp.hostinger.com",
+      port: process.env.SMTP_PORT || 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      tls: { rejectUnauthorized: false },
+    });
+
+    // 5️⃣ Enviar correo
+    const info = await transporter.sendMail({
+      from: `"MiDuelo" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "Verifica tu cuenta en MiDueloApp",
+      html: `
+        <h2>¡Hola ${nombre || "usuario"}!</h2>
+        <p>Gracias por registrarte en <b>MiDueloApp</b>.</p>
+        <p>Confirma tu cuenta haciendo clic en el siguiente botón:</p>
+        <a href="${verifyUrl}" 
+          style="background:#2F5249;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
+          Verificar mi correo
+        </a>
+        <p>Si no solicitaste esta cuenta, ignora este mensaje.</p>
+      `,
+    });
+
+    console.log("📨 Correo enviado:", info.messageId);
+
+    return res.status(200).json({ message: "Correo de verificación enviado correctamente." });
+  } catch (err) {
+    console.error("❌ Error en sendVerificationEmail:", err);
+    return res.status(500).json({ message: "Error al enviar correo de verificación." });
+  }
+},
 
   // ============================================================
   // 🔹 Validar correo al abrir enlace
