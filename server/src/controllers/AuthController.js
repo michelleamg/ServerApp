@@ -1,19 +1,20 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } from "../db/config.js";
 import User from "../models/userModel.js";
 import nodemailer from "nodemailer";
-import crypto from "crypto";
 
-function CalcularEdad(fechaNacimiento) {
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-    return edad;
+function calcularEdad(fechaNacimiento) {
+  const hoy = new Date();
+  const fecha = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - fecha.getFullYear();
+  const mes = hoy.getMonth() - fecha.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) {
+    edad--;
   }
+  return edad;
+}
 
 export const AuthController = {
   // Registro de paciente
@@ -83,8 +84,15 @@ export const AuthController = {
       return res.status(201).json({
         message: "Paciente registrado exitosamente",
         token,
-        user: { id_paciente: newId, nombre, email, session_token: token },
+        id_paciente: newId, // 🟢 agregado para el front
+        user: {
+          id_paciente: newId,
+          nombre,
+          email,
+          session_token: token,
+        },
       });
+
     } catch (err) {
       console.error("Error en register:", err);
       return res.status(500).json({ message: "Error en el registro", error: err.message });
@@ -141,128 +149,219 @@ export const AuthController = {
     }
   },
 
-  // Middleware para verificar token (opcional, para futuras rutas protegidas)
+  // Middleware para verificar token
+  // ============================================================
+  // 🔹 Middleware: verificar JWT en endpoints protegidos
+  // ============================================================
   async verifyToken(req, res, next) {
     try {
-      const token = req.headers.authorization?.split(' ')[1];
-      
+      const token = req.headers.authorization?.split(" ")[1];
       if (!token) {
         return res.status(401).json({ message: "Token no proporcionado" });
       }
 
-      // Verificar si el token existe en la base de datos
-      const user = await User.findByToken(token);
+      // Verificar firma JWT
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59"
+      );
+
+      const user = await User.findById(decoded.sub);
       if (!user) {
         return res.status(401).json({ message: "Token inválido" });
       }
 
-      // Verificar firma JWT
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59");
-      
       req.user = user;
       next();
     } catch (error) {
-      return res.status(401).json({ message: "Token inválido o expirado" });
+      console.error("❌ Error en verifyToken:", error);
+      return res
+        .status(401)
+        .json({ message: "Token inválido o expirado", error: error.message });
+    }
+  },
+
+  // ============================================================
+  // 🔹 Enviar correo de verificación (seguro)
+  // ============================================================
+  async sendVerificationEmail(req, res) {
+    try {
+      const { id_paciente, email, nombre } = req.body;
+
+      if (!id_paciente || !email) {
+        return res
+          .status(400)
+          .json({ message: "Faltan datos para enviar el correo." });
+      }
+
+      // 1️⃣ Generar token aleatorio y hashearlo para guardarlo seguro
+      const rawToken = crypto.randomBytes(40).toString("hex");
+      const hashedToken = await bcrypt.hash(rawToken, 10);
+
+      // 2️⃣ Guardar token en la BD
+      await User.saveVerificationToken(id_paciente, hashedToken);
+
+
+      // 4️⃣ Enlace con token visible (hash no se manda)
+      const verifyUrl = `https://api-mobile.midueloapp.com/api/verify/${encodeURIComponent(
+        rawToken
+      )}`;
+
+      // 5️⃣ Enviar correo real
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: true, // ✅ Hostinger usa SSL en 465
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false, // ⚠️ solo si usas un certificado autofirmado en tu VM
+        },
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Correo de verificación enviado correctamente." });
+    } catch (err) {
+      console.error("❌ Error en sendVerificationEmail:", err);
+      return res
+        .status(500)
+        .json({ message: "Error al enviar correo de verificación." });
+    }
+  },
+
+  // ============================================================
+  // 🔹 Validar correo al abrir enlace
+  // ============================================================
+  async verifyEmail(req, res) {
+    try {
+      const { token } = req.params;
+
+      const users = await User.findAllWithTokens();
+      let matchedUser = null;
+
+      for (const u of users) {
+        const match = await bcrypt.compare(token, u.token_verificacion);
+        if (match) {
+          matchedUser = u;
+          break;
+        }
+      }
+
+      if (!matchedUser) {
+        return res
+          .status(400)
+          .send("<h2>❌ Enlace inválido o expirado.</h2>");
+      }
+
+      await User.verifyEmail(matchedUser.id_paciente);
+      res.send(
+        "<h2>✅ Correo verificado correctamente. ¡Ya puedes iniciar sesión!</h2>"
+      );
+    } catch (err) {
+      console.error("❌ Error en verifyEmail:", err);
+      res
+        .status(500)
+        .send("<h2>⚠️ Error interno del servidor.</h2>");
     }
   },
 
     // Recuperación de contraseña
   // Recuperación de contraseña (versión simplificada con token en el correo)
-async recoverPassword(req, res) {
-    try {
-      const { email } = req.body;
+  async recoverPassword(req, res) {
+      try {
+        const { email } = req.body;
 
-      if (!email) {
-        return res.status(400).json({ message: "El correo es requerido" });
-      }
+        if (!email) {
+          return res.status(400).json({ message: "El correo es requerido" });
+        }
 
-      const user = await User.findByEmail(email);
-      if (!user) {
-        return res.status(404).json({ message: "No existe una cuenta con este correo" });
-      }
+        const user = await User.findByEmail(email);
+        if (!user) {
+          return res.status(404).json({ message: "No existe una cuenta con este correo" });
+        }
 
-      // Crear token y expiración
-      const token = crypto.randomBytes(4).toString("hex");
-      const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
-      await User.saveResetToken(user.id_paciente, token, expires);
+        // Crear token y expiración
+        const token = crypto.randomBytes(4).toString("hex");
+        const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+        await User.saveResetToken(user.id_paciente, token, expires);
 
-      // Configurar SMTP
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: true, // SSL
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
+        // Configurar SMTP
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT,
+          secure: true, // SSL
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
 
-      // Enviar correo con token directamente
-      // Enviar correo con el token en texto verde
-      await transporter.sendMail({
-        from: `"MiDuelo Soporte" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: "Recuperación de contraseña - MiDuelo",
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2 style="color:#2E7D32;">Hola ${user.nombre || "usuario"},</h2>
-            <p>Has solicitado restablecer tu contraseña en <b>MiDuelo</b>.</p>
-            <p>Usa el siguiente código en la aplicación móvil para restablecer tu contraseña:</p>
-            <div style="
-              background-color:#4CAF50;
-              color:#fff;
-              display:inline-block;
-              font-size:20px;
-              font-weight:bold;
-              padding:10px 25px;
-              border-radius:8px;
-              margin:15px 0;
-            ">
-              ${token}
+        // Enviar correo con token directamente
+        // Enviar correo con el token en texto verde
+        await transporter.sendMail({
+          from: `"MiDuelo Soporte" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: "Recuperación de contraseña - MiDuelo",
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+              <h2 style="color:#2E7D32;">Hola ${user.nombre || "usuario"},</h2>
+              <p>Has solicitado restablecer tu contraseña en <b>MiDuelo</b>.</p>
+              <p>Usa el siguiente código en la aplicación móvil para restablecer tu contraseña:</p>
+              <div style="
+                background-color:#4CAF50;
+                color:#fff;
+                display:inline-block;
+                font-size:20px;
+                font-weight:bold;
+                padding:10px 25px;
+                border-radius:8px;
+                margin:15px 0;
+              ">
+                ${token}
+              </div>
+              <p>Este código expirará en 15 minutos.</p>
+              <p style="margin-top:20px;">Si no solicitaste esto, puedes ignorar este mensaje.</p>
+              <hr/>
+              <p style="font-size:12px;color:#777;">© ${new Date().getFullYear()} MiDuelo. Todos los derechos reservados.</p>
             </div>
-            <p>Este código expirará en 15 minutos.</p>
-            <p style="margin-top:20px;">Si no solicitaste esto, puedes ignorar este mensaje.</p>
-            <hr/>
-            <p style="font-size:12px;color:#777;">© ${new Date().getFullYear()} MiDuelo. Todos los derechos reservados.</p>
-          </div>
-        `,
-      });
+          `,
+        });
 
-      console.log(`📧 Token enviado a ${email}: ${token}`);
-      return res.status(200).json({ message: "Se ha enviado un código de recuperación a tu correo." });
+        console.log(`📧 Token enviado a ${email}: ${token}`);
+        return res.status(200).json({ message: "Se ha enviado un código de recuperación a tu correo." });
 
-    } catch (err) {
-      console.error("❌ Error en recoverPassword:", err);
-      return res.status(500).json({ message: "Error al enviar el correo", error: err.message });
-    }
-},
-
-
-  // Aplicar nueva contraseña usando el token
-async resetPassword(req, res) {
-    try {
-      const { token, newPassword } = req.body;
-
-      if (!token || !newPassword) {
-        return res.status(400).json({ message: "Faltan datos" });
+      } catch (err) {
+        console.error("❌ Error en recoverPassword:", err);
+        return res.status(500).json({ message: "Error al enviar el correo", error: err.message });
       }
+  },
 
-      const user = await User.findByResetToken(token);
-      if (!user) {
-        return res.status(400).json({ message: "Token inválido o expirado" });
+
+    // Aplicar nueva contraseña usando el token
+  async resetPassword(req, res) {
+      try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+          return res.status(400).json({ message: "Faltan datos" });
+        }
+
+        const user = await User.findByResetToken(token);
+        if (!user) {
+          return res.status(400).json({ message: "Token inválido o expirado" });
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await User.updatePassword(user.id_paciente, hashed);
+        await User.clearResetToken(user.id_paciente);
+
+        return res.status(200).json({ message: "Contraseña restablecida correctamente" });
+      } catch (err) {
+        console.error("❌ Error en resetPassword:", err);
+        return res.status(500).json({ message: "Error al restablecer contraseña" });
       }
-
-      const hashed = await bcrypt.hash(newPassword, 10);
-      await User.updatePassword(user.id_paciente, hashed);
-      await User.clearResetToken(user.id_paciente);
-
-      return res.status(200).json({ message: "Contraseña restablecida correctamente" });
-    } catch (err) {
-      console.error("❌ Error en resetPassword:", err);
-      return res.status(500).json({ message: "Error al restablecer contraseña" });
     }
-  }
-
-
-  
 };

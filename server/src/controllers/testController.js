@@ -46,9 +46,10 @@ export const testController = {
           error: 'Datos incompletos: userId y answers son requeridos' 
         });
       }
+      
 
       // 1. Crear aplicación de test
-      const id_aplicacion = await Test.createApplication(1, userId);
+      const id_aplicacion = await Test.createApplication(1, userId, 'inicial');
       console.log('✅ Aplicación creada ID:', id_aplicacion);
 
       // 2. Guardar respuestas
@@ -69,8 +70,6 @@ export const testController = {
         [id_aplicacion]
       );
       console.log("🟢 Estado actualizado a 'completado' para:", id_aplicacion);
-
-
       await connection.commit();
       
       res.json({ 
@@ -84,17 +83,18 @@ export const testController = {
           tipoDuelo: griefType
         }
       });
-
-    } catch (error) {
+     } catch (error) {
       await connection.rollback();
+
+      if (error.message.includes("ya completó el test inicial")) {
+        return res.status(400).json({
+          success: false,
+          error: "El paciente ya completó el test inicial y no puede repetirlo."
+        });
+      }
+
       console.error('❌ Error en saveResults:', error);
-      res.status(500).json({ 
-        success: false,
-        error: 'Error interno del servidor',
-        detalle: error.message 
-      });
-    } finally {
-      connection.release();
+      res.status(500).json({ success: false, error: 'Error interno del servidor' });
     }
   },
 
@@ -133,6 +133,35 @@ export const testController = {
       res.status(500).json({ hasCompletedTest: false });
     }
   },
+    // ✅ Obtener el último resultado del test
+    getLastResult: async (req, res) => {
+      const { id_paciente } = req.params;
+
+      try {
+        console.log("📊 Consultando último resultado para paciente:", id_paciente);
+
+        const result = await Test.getLastResult(id_paciente);
+
+        if (!result) {
+          return res.status(404).json({
+            success: false,
+            message: "No se encontraron resultados para este paciente.",
+          });
+        }
+
+        res.json({
+          success: true,
+          result,
+        });
+      } catch (error) {
+        console.error("❌ Error en getLastResult:", error);
+        res.status(500).json({
+          success: false,
+          error: "Error al obtener el resultado del test.",
+        });
+      }
+    },
+
 
 };
 

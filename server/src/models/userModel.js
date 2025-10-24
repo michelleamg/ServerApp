@@ -85,6 +85,25 @@ User.findByToken = async (token) => {
   return rows[0] || null;
 };
 
+User.saveVerificationToken = async (id_paciente, token) => {
+  const sql = `UPDATE paciente SET token_verificacion = ?, token_expira = DATE_ADD(NOW(), INTERVAL 1 DAY) WHERE id_paciente = ?`;
+  await pool.query(sql, [token, id_paciente]);
+};
+
+User.findAllWithTokens = async () => {
+  const sql = `SELECT id_paciente, token_verificacion FROM paciente WHERE token_verificacion IS NOT NULL`;
+  const [rows] = await pool.query(sql);
+  return rows;
+};
+
+User.verifyEmail = async (id_paciente) => {
+  const sql = `
+    UPDATE paciente 
+    SET email_verificado = 1, token_verificacion = NULL, token_expira = NULL 
+    WHERE id_paciente = ?`;
+  await pool.query(sql, [id_paciente]);
+};
+
 // Guardar token y expiración
 User.saveResetToken = async (id_paciente, token, expires) => {
   const sql = `UPDATE paciente SET reset_token = ?, reset_expires = ? WHERE id_paciente = ?`;

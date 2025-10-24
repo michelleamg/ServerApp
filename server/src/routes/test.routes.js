@@ -10,4 +10,7 @@ router.get("/history/:id_paciente", testController.getHistory);
 
 router.get("/status/:id_paciente", testController.getCompletedTest); 
 
+router.get("/results/:id_paciente", testController.getLastResult);
+
+
 export default router;
