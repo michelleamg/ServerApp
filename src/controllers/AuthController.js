@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js"
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } from "../db/config.js";
 
 function calcularEdad(fechaNacimiento) {
   const hoy = new Date();
@@ -146,30 +149,142 @@ export const AuthController = {
     }
   },
 
-  // Middleware para verificar token (opcional, para futuras rutas protegidas)
+  // Middleware para verificar token
+  // ============================================================
+  // 🔹 Middleware: verificar JWT en endpoints protegidos
+  // ============================================================
   async verifyToken(req, res, next) {
     try {
-      const token = req.headers.authorization?.split(' ')[1];
-      
+      const token = req.headers.authorization?.split(" ")[1];
       if (!token) {
         return res.status(401).json({ message: "Token no proporcionado" });
       }
 
-      // Verificar si el token existe en la base de datos
-      const user = await User.findByToken(token);
+      // Verificar firma JWT
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59"
+      );
+
+      const user = await User.findById(decoded.sub);
       if (!user) {
         return res.status(401).json({ message: "Token inválido" });
       }
 
-      // Verificar firma JWT
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59");
-      
       req.user = user;
       next();
     } catch (error) {
-      return res.status(401).json({ message: "Token inválido o expirado" });
+      console.error("❌ Error en verifyToken:", error);
+      return res
+        .status(401)
+        .json({ message: "Token inválido o expirado", error: error.message });
     }
-  }
+  },
 
-  
+  // ============================================================
+  // 🔹 Enviar correo de verificación (seguro)
+  // ============================================================
+  async sendVerificationEmail(req, res) {
+    try {
+      const { id_paciente, email, nombre } = req.body;
+
+      if (!id_paciente || !email) {
+        return res
+          .status(400)
+          .json({ message: "Faltan datos para enviar el correo." });
+      }
+
+      // 1️⃣ Generar token aleatorio y hashearlo para guardarlo seguro
+      const rawToken = crypto.randomBytes(40).toString("hex");
+      const hashedToken = await bcrypt.hash(rawToken, 10);
+
+      // 2️⃣ Guardar token en la BD
+      await User.saveVerificationToken(id_paciente, hashedToken);
+
+      console.log("SMTP_USER:", SMTP_USER);
+      console.log("SMTP_PASS:", SMTP_PASS ? "✅ existe" : "❌ vacío");
+
+
+      // 3️⃣ Configurar SMTP de Hostinger
+      const transporter = nodemailer.createTransport({
+        host: SMTP_HOST || "smtp.hostinger.com",
+        port: SMTP_PORT || 465,
+        secure: true, // 465 requiere SSL
+        auth: {
+          user:SMTP_USER,
+          pass: SMTP_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false, // ✅ evita error de certificado en local
+        },
+      });
+
+      // 4️⃣ Enlace con token visible (hash no se manda)
+      const verifyUrl = `http://192.168.1.80:3000/api/verify/${encodeURIComponent(
+        rawToken
+      )}`;
+
+      // 5️⃣ Enviar correo real
+      await transporter.sendMail({
+        from: `"MiDueloApp 💚" <${SMTP_USER}>`,
+        to: email,
+        subject: "Verifica tu cuenta en MiDueloApp",
+        html: `
+          <h2>¡Hola ${nombre || "usuario"}!</h2>
+          <p>Gracias por registrarte en <b>MiDueloApp</b>.</p>
+          <p>Confirma tu cuenta haciendo clic en el siguiente botón:</p>
+          <a href="${verifyUrl}" 
+             style="background:#2F5249;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
+             Verificar mi correo
+          </a>
+          <p>Este enlace expirará en 24 horas.</p>
+        `,
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Correo de verificación enviado correctamente." });
+    } catch (err) {
+      console.error("❌ Error en sendVerificationEmail:", err);
+      return res
+        .status(500)
+        .json({ message: "Error al enviar correo de verificación." });
+    }
+  },
+
+  // ============================================================
+  // 🔹 Validar correo al abrir enlace
+  // ============================================================
+  async verifyEmail(req, res) {
+    try {
+      const { token } = req.params;
+
+      const users = await User.findAllWithTokens();
+      let matchedUser = null;
+
+      for (const u of users) {
+        const match = await bcrypt.compare(token, u.token_verificacion);
+        if (match) {
+          matchedUser = u;
+          break;
+        }
+      }
+
+      if (!matchedUser) {
+        return res
+          .status(400)
+          .send("<h2>❌ Enlace inválido o expirado.</h2>");
+      }
+
+      await User.verifyEmail(matchedUser.id_paciente);
+      res.send(
+        "<h2>✅ Correo verificado correctamente. ¡Ya puedes iniciar sesión!</h2>"
+      );
+    } catch (err) {
+      console.error("❌ Error en verifyEmail:", err);
+      res
+        .status(500)
+        .send("<h2>⚠️ Error interno del servidor.</h2>");
+    }
+  },
 };

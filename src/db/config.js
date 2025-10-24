@@ -8,3 +8,12 @@ export const DB_USER = process.env.DB_USER || "Michelle";
 export const DB_PASS = process.env.DB_PASS || "hD*F9jBw@U6dS6Ym";
 export const DB_DATABASE = process.env.DB_DATABASE || "miduelo";
 export const DB_PORT = process.env.DB_PORT || 3306;
+
+export const SMTP_HOST = process.env.SMTP_HOST|| "smtp.hostinger.com";
+export const SMTP_PORT = process.env.SMTP_PORT|| 465;
+export const SMTP_USER = process.env.SMTP_USER|| "soporte_tecnico@midueloapp.com";
+export const SMTP_PASS = process.env.SMTP_PASS|| "Escom2025B025*";
+
+
+
+
