@@ -2,6 +2,7 @@
   "name": "mobile-api",
   "version": "1.0.0",
   "description": "Backend móvil de MiDueloApp (API REST con Node.js + Express + MySQL)",
+  "type": "module",        
   "main": "src/app.js",
   "author": "MiDuelo Team",
   "license": "ISC",
