@@ -16,10 +16,16 @@ export const getPacienteById = async (req, res) => {
 export const updatePaciente = async (req, res) => {
   try {
     const id = req.params.id;
-    const result = await Paciente.updateById(id, req.body); // 👈 asegúrate de pasar req.body
+    const data = req.body;   // Campos de texto
+    const file = req.file;   // Imagen si viene
+
+    console.log("🧾 Data recibida:", data);
+    console.log("🖼️ Archivo recibido:", file ? file.filename : "ninguno");
+
+    const result = await Paciente.updateById(id, data, file);
     res.json(result);
   } catch (error) {
-    console.error("Error al actualizar paciente:", error);
+    console.error("❌ Error al actualizar paciente:", error);
     res.status(500).json({ message: "Error al actualizar paciente" });
   }
 };
