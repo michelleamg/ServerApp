@@ -84,7 +84,7 @@ export const AuthController = {
       return res.status(201).json({
         message: "Paciente registrado exitosamente",
         token,
-        id_paciente: newId, // 🟢 agregado para el front
+        id_paciente: newId,
         user: {
           id_paciente: newId,
           nombre,
@@ -189,46 +189,70 @@ export const AuthController = {
       const { id_paciente, email, nombre } = req.body;
 
       if (!id_paciente || !email) {
-        return res
-          .status(400)
-          .json({ message: "Faltan datos para enviar el correo." });
+        return res.status(400).json({ message: "Faltan datos para enviar el correo." });
       }
 
-      // 1️⃣ Generar token aleatorio y hashearlo para guardarlo seguro
+      // 🟢 1️⃣ Verificar si ya está verificado
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado." });
+      }
+
+      if (user.email_verificado === 1) {
+        return res.status(200).json({ message: "El correo ya fue verificado previamente." });
+      }
+
+      // 2️⃣ Generar token aleatorio y hashearlo
       const rawToken = crypto.randomBytes(40).toString("hex");
       const hashedToken = await bcrypt.hash(rawToken, 10);
 
-      // 2️⃣ Guardar token en la BD
+      // 3️⃣ Guardar token en la BD
       await User.saveVerificationToken(id_paciente, hashedToken);
 
-
       // 4️⃣ Enlace con token visible (hash no se manda)
-      const verifyUrl = `https://api-mobile.midueloapp.com/api/verify/${encodeURIComponent(
-        rawToken
-      )}`;
+      const verifyUrl = `https://api-mobile.midueloapp.com/api/verify/${encodeURIComponent(rawToken)}`;
 
-      // 5️⃣ Enviar correo real
+      // 5️⃣ Configurar transporter
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT,
-        secure: true, // ✅ Hostinger usa SSL en 465
+        secure: true,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
-        tls: {
-          rejectUnauthorized: false, // ⚠️ solo si usas un certificado autofirmado en tu VM
-        },
+        tls: { rejectUnauthorized: false },
       });
 
-      return res
-        .status(200)
-        .json({ message: "Correo de verificación enviado correctamente." });
+      // 6️⃣ Configurar mensaje HTML
+      const mailOptions = {
+        from: `"MiDuelo App 💚" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: "Verifica tu correo - MiDuelo App",
+        html: `
+          <div style="font-family: Poppins, Arial; padding: 20px; color: #333;">
+            <h2 style="color:#2F5249;">¡Hola ${nombre}!</h2>
+            <p>Gracias por registrarte en <strong>MiDuelo App</strong>.</p>
+            <p>Por favor confirma tu correo electrónico haciendo clic en el siguiente botón:</p>
+            <a href="${verifyUrl}" 
+              style="background-color:#2F5249; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; display:inline-block; margin-top:10px;">
+              Verificar mi correo
+            </a>
+            <p style="margin-top:20px; font-size:14px; color:#666;">
+              Si ya verificaste tu cuenta, puedes ignorar este mensaje.
+            </p>
+          </div>
+        `,
+      };
+
+      // 7️⃣ Enviar correo
+      await transporter.sendMail(mailOptions);
+
+      return res.status(200).json({ message: "📩 Correo de verificación enviado correctamente." });
+
     } catch (err) {
       console.error("❌ Error en sendVerificationEmail:", err);
-      return res
-        .status(500)
-        .json({ message: "Error al enviar correo de verificación." });
+      return res.status(500).json({ message: "Error al enviar correo de verificación." });
     }
   },
 
@@ -253,7 +277,7 @@ export const AuthController = {
       if (!matchedUser) {
         return res
           .status(400)
-          .send("<h2>❌ Enlace inválido o expirado.</h2>");
+          .send("<h2> Enlace inválido o expirado.</h2>");
       }
 
       await User.verifyEmail(matchedUser.id_paciente);
