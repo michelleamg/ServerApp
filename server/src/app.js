@@ -33,7 +33,7 @@ app.use("/api/consentimientos", consentimientoRoutes);
 app.use("/api/agenda", agendaRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/pacientes",pacientesRoutes);
-
+app.use("/api/diario-emociones", diarioEmocionesRoutes);
 
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
