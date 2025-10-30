@@ -85,6 +85,7 @@ export const AuthController = {
         message: "Paciente registrado exitosamente",
         token,
         id_paciente: newId, // 🟢 agregado para el front
+        id_paciente: newId, // 🟢 agregado para el front
         user: {
           id_paciente: newId,
           nombre,
@@ -261,6 +262,7 @@ export const AuthController = {
       if (!matchedUser) {
         return res
           .status(400)
+          .send("<h2>❌ Enlace inválido o expirado.</h2>");
           .send("<h2>❌ Enlace inválido o expirado.</h2>");
       }
 
