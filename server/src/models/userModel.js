@@ -6,7 +6,7 @@ const User = {};
 User.findByEmail = async (email) => {
   const sql = `
     SELECT id_paciente, nombre, apellido_paterno, apellido_materno, email, 
-           contrasena, telefono, id_psicologo, session_token
+           contrasena, telefono, id_psicologo, session_token,email_verificado
     FROM paciente
     WHERE email = ?
     LIMIT 1
