@@ -10,6 +10,7 @@ import consentimientoRoutes from "./routes/consentimiento.routes.js";
 import testRoutes from "./routes/test.routes.js"
 import agendaRoutes from "./routes/agenda.routes.js";
 import pacientesRoutes from "./routes/pacientes.routes.js";
+import diarioEmocionesRoutes from "./routes/diarioEmociones.routes.js";
 
 const app = express();
 
