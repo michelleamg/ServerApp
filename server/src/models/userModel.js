@@ -137,4 +137,15 @@ User.updatePassword = async (id_paciente, newPassword) => {
   return true;
 };
 
+User.clearSessionToken = async (id_paciente) => {
+  const sql = `
+    UPDATE paciente
+    SET session_token = NULL, actualizada_en = CURRENT_TIMESTAMP
+    WHERE id_paciente = ?
+  `;
+  await pool.query(sql, [id_paciente]);
+  return true;
+};
+
+
 export default User;

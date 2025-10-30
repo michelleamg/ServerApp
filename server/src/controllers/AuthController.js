@@ -429,5 +429,32 @@ export const AuthController = {
         console.error("❌ Error en resetPassword:", err);
         return res.status(500).json({ message: "Error al restablecer contraseña" });
       }
-    }
+    },
+
+          // ============================================================
+      // 🔹 Logout (cerrar sesión de paciente)
+      // ============================================================
+      async logout(req, res) {
+        try {
+          const token = req.headers.authorization?.split(" ")[1];
+          if (!token) {
+            return res.status(401).json({ message: "Token no proporcionado" });
+          }
+
+          // Buscar paciente por su session_token
+          const user = await User.findByToken(token);
+          if (!user) {
+            return res.status(401).json({ message: "Token inválido o usuario no encontrado" });
+          }
+
+          // Limpiar el session_token
+          await User.clearSessionToken(user.id_paciente);
+
+          console.log(`🚪 Sesión cerrada para ${user.email}`);
+          return res.status(200).json({ message: "Sesión cerrada correctamente" });
+        } catch (error) {
+          console.error("❌ Error en logout:", error);
+          return res.status(500).json({ message: "Error al cerrar sesión", error: error.message });
+        }
+      },
 };

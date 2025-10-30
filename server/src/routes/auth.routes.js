@@ -13,5 +13,7 @@ router.get('/reset-password/:token', (req, res) => {
 });
 router.post("/verify/send", AuthController.sendVerificationEmail);
 router.get("/verify/:token", AuthController.verifyEmail);
+router.post("/logout", AuthController.logout);
+
 
 export default router;
