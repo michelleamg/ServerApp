@@ -17,6 +17,10 @@ export const updatePaciente = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    if (req.file) {
+      data.foto = req.file.filename; // nombre del archivo subido
+    }
+
     const updated = await PacienteModel.updateById(id, data);
     res.json({ message: "Perfil actualizado", paciente: updated });
   } catch (error) {
@@ -24,3 +28,4 @@ export const updatePaciente = async (req, res) => {
     res.status(500).json({ message: "Error del servidor" });
   }
 };
+

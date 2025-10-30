@@ -4,6 +4,6 @@ import { getPacienteById, updatePaciente } from "../controllers/pacientesControl
 const router = Router();
 
 router.get("/:id", getPacienteById);
-router.put("/:id", updatePaciente);
+router.put("/:id", upload.single("foto"), updatePaciente);
 
 export default router;
