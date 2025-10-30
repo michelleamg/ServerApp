@@ -30,14 +30,12 @@ export const testController = {
       await connection.beginTransaction();
       
       const { 
-        userId, 
-        id_test, 
-        answers, 
+        userId,           // id_paciente
+        answers,          // respuestas
         initialScore, 
         currentScore, 
-        griefType 
+        griefType         // interpretación
       } = req.body;
-
 
       console.log('💾 Guardando resultados para usuario:', userId);
 
@@ -51,7 +49,7 @@ export const testController = {
       
 
       // 1. Crear aplicación de test
-      const id_aplicacion = await Test.createApplication(id_test, userId, 'inicial');
+      const id_aplicacion = await Test.createApplication(1, userId, 'inicial');
       console.log('✅ Aplicación creada ID:', id_aplicacion);
 
       // 2. Guardar respuestas
