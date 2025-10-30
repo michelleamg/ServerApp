@@ -3,7 +3,7 @@ import { pool } from "../db/db.js"; // tu pool de mysql2/promise
 export const PacienteModel = {
   async getById(id_paciente) {
     const [rows] = await pool.query(
-      "SELECT id_paciente AS id, nombre, apellido_paterno, apellido_materno, fecha_nacimiento, telefono, email FROM pacientes WHERE id_paciente = ?",
+      "SELECT id_paciente AS id, nombre, apellido_paterno, apellido_materno, fecha_nacimiento, telefono, email FROM paciente WHERE id_paciente = ?",
       [id_paciente]
     );
     return rows[0];
@@ -13,7 +13,7 @@ export const PacienteModel = {
     const { nombre, apellido_paterno, apellido_materno, fecha_nacimiento, telefono, email } = data;
 
     await pool.query(
-      `UPDATE pacientes 
+      `UPDATE paciente
        SET nombre = ?, apellido_paterno = ?, apellido_materno = ?, 
            fecha_nacimiento = ?, telefono = ?, email = ?
        WHERE id_paciente = ?`,
