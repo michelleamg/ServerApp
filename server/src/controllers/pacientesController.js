@@ -1,9 +1,9 @@
-import { PacienteModel } from "../models/pacientemodel.js";
+import { PacienteModel as Paciente } from "../models/pacientemodel.js";
 
 export const getPacienteById = async (req, res) => {
   try {
     const { id } = req.params;
-    const paciente = await PacienteModel.getById(id);
+    const paciente = await Paciente.getById(id);
 
     if (!paciente) return res.status(404).json({ message: "Paciente no encontrado" });
     res.json(paciente);
