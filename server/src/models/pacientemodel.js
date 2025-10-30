@@ -4,7 +4,7 @@ export const PacienteModel = {
   // 🔹 Obtener un paciente por ID
   async getById(id_paciente) {
     const [rows] = await pool.query(
-      "SELECT id_paciente AS id, nombre, apellido_paterno, apellido_materno, fecha_nacimiento, telefono, email, foto FROM paciente WHERE id_paciente = ?",
+      "SELECT id_paciente AS id, nombre, apellido_paterno, apellido_materno, fecha_nacimiento, telefono, email, foto_perfil FROM paciente WHERE id_paciente = ?",
       [id_paciente]
     );
     return rows[0];
