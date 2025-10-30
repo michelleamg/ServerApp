@@ -100,7 +100,9 @@ export const AuthController = {
     }
   },
 
-  // Login de paciente
+    // ============================================================
+  // 🔹 Login de paciente con verificación automática
+  // ============================================================
   async login(req, res) {
     try {
       const { email, password } = req.body;
@@ -114,22 +116,72 @@ export const AuthController = {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
 
-      // usa 'contrasena' (como está en tu tabla)
+      // Comparar contraseña
       const match = await bcrypt.compare(password, user.contrasena || "");
       if (!match) {
         return res.status(401).json({ message: "Contraseña incorrecta" });
       }
-      
+
+      // 🔹 Verificar si el correo ya está confirmado
+      if (user.email_verificado !== 1) {
+        // 1️⃣ Generar token de verificación nuevo
+        const rawToken = crypto.randomBytes(40).toString("hex");
+        const hashedToken = await bcrypt.hash(rawToken, 10);
+        await User.saveVerificationToken(user.id_paciente, hashedToken);
+
+        // 2️⃣ Crear enlace de verificación
+        const verifyUrl = `https://api-mobile.midueloapp.com/api/verify/${encodeURIComponent(rawToken)}`;
+
+        // 3️⃣ Configurar transporte SMTP
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST || "smtp.hostinger.com",
+          port: process.env.SMTP_PORT || 465,
+          secure: true,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+          tls: { rejectUnauthorized: false },
+        });
+
+        // 4️⃣ Enviar correo
+        await transporter.sendMail({
+          from: `"MiDuelo App 💚" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: "Verifica tu correo - MiDuelo App",
+          html: `
+            <div style="font-family:Poppins,Arial;padding:20px;color:#333;">
+              <h2 style="color:#2F5249;">¡Hola ${user.nombre}!</h2>
+              <p>Tu cuenta en <strong>MiDuelo App</strong> aún no ha sido verificada.</p>
+              <p>Por favor revisa tu bandeja de entrada y haz clic en el siguiente botón para confirmar tu correo:</p>
+              <a href="${verifyUrl}" 
+                 style="background-color:#2F5249;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:10px;">
+                Verificar mi correo
+              </a>
+              <p style="margin-top:20px;font-size:14px;color:#666;">
+                Una vez verificado, podrás iniciar sesión normalmente 💚
+              </p>
+            </div>
+          `,
+        });
+
+        console.log(`📩 Enlace de verificación reenviado a ${email}`);
+
+        return res.status(403).json({
+          message:
+            "Tu correo aún no ha sido verificado. Revisa tu bandeja y completa la verificación antes de ingresar 💌.",
+        });
+      }
+
+      // 🔹 Si ya está verificado, continuar con login normal
       const consent = await User.findConsentimientos(user.id_paciente);
-      
-      // Generar nuevo token
+
       const token = jwt.sign(
         { sub: user.id_paciente, role: "paciente" },
         process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59",
         { expiresIn: "7d" }
       );
 
-      // Actualizar token en la base de datos
       await User.saveSessionToken(user.id_paciente, token);
 
       return res.status(200).json({
@@ -141,14 +193,19 @@ export const AuthController = {
           email: user.email,
           aviso_privacidad: consent?.aviso_privacidad || 0,
           terminos_condiciones: consent?.terminos_condiciones || 0,
-          session_token: token
+          session_token: token,
         },
       });
+
     } catch (err) {
-      console.error(" Error en login:", err);
-      return res.status(500).json({ message: "Error en el servidor", error: err.message });
+      console.error("❌ Error en login:", err);
+      return res.status(500).json({
+        message: "Error en el servidor",
+        error: err.message,
+      });
     }
   },
+  // ============================================================
 
   // Middleware para verificar token
   // ============================================================
@@ -262,19 +319,18 @@ export const AuthController = {
       if (!matchedUser) {
         return res
           .status(400)
-          .send("<h2>❌ Enlace inválido o expirado.</h2>");
-          .send("<h2>❌ Enlace inválido o expirado.</h2>");
+          .json({ message: "Enlace inválido o expirado." });
       }
 
       await User.verifyEmail(matchedUser.id_paciente);
-      res.send(
-        "<h2>✅ Correo verificado correctamente. ¡Ya puedes iniciar sesión!</h2>"
-      );
+      res.json({
+        message: "Correo verificado correctamente. ¡Ya puedes iniciar sesión!",
+      });
     } catch (err) {
       console.error("❌ Error en verifyEmail:", err);
       res
         .status(500)
-        .send("<h2>⚠️ Error interno del servidor.</h2>");
+        .json({ message: "Error interno del servidor." });
     }
   },
 
