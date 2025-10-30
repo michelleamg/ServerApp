@@ -1,4 +1,4 @@
-import { pool } from "../db.js"; // tu pool de mysql2/promise
+import { pool } from "../db/db.js"; // tu pool de mysql2/promise
 
 export const PacienteModel = {
   async getById(id_paciente) {
