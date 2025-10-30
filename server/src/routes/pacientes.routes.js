@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getPacienteById, updatePaciente } from "../controllers/pacientesController.js";
+import { upload } from "../middlewares/uploadMiddleware.js";
 
 const router = Router();
 
