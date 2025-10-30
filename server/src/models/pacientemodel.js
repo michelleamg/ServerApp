@@ -38,9 +38,9 @@ export const PacienteModel = {
       email,
     ];
 
-    // Si hay archivo, agrega el campo foto
+    // Si hay archivo, agrega el campo foto_perfil
     if (file) {
-      sql += ", foto = ?";
+      sql += ", foto_perfil = ?";
       values.push(file.filename);
     }
 
