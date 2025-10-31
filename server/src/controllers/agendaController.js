@@ -1,5 +1,6 @@
 // controllers/agendaController.js
 import pool from "../db/db.js";
+import moment from "moment";
 
 export const AgendaController = {
   // 🔹 Obtener semanas disponibles del psicólogo vinculado al paciente
@@ -32,7 +33,7 @@ export const AgendaController = {
         [id_psicologo]
       );
 
-      // 3️⃣ Para cada semana, traer citas relacionadas
+      // 3️⃣ Para cada semana, traer citas relacionadas y evaluar si ya pasaron
       for (const semana of semanas) {
         const [citas] = await pool.query(
           `SELECT id_cita, fecha, hora_inicio, hora_fin, modalidad, estado
@@ -41,7 +42,20 @@ export const AgendaController = {
            ORDER BY fecha, hora_inicio`,
           [semana.id_agenda]
         );
-        semana.citas = citas;
+
+        const ahora = moment();
+
+        semana.citas = citas.map((cita) => {
+          const fechaHoraFin = moment(`${cita.fecha} ${cita.hora_fin}`);
+          let estado_visual = cita.estado;
+
+          // 🧠 Si la cita está confirmada y ya pasó, márcala como "pasado"
+          if (cita.estado === "confirmada" && fechaHoraFin.isBefore(ahora)) {
+            estado_visual = "pasado";
+          }
+
+          return { ...cita, estado_visual };
+        });
       }
 
       return res.status(200).json({ id_psicologo, semanas });
@@ -93,6 +107,7 @@ export const AgendaController = {
         return res.status(400).json({ message: "Faltan campos requeridos" });
       }
 
+      // 💡 Insertar nueva cita como pendiente
       const [result] = await pool.query(
         `INSERT INTO cita (id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad, estado)
          VALUES (?, ?, ?, ?, ?, ?, 'pendiente')`,
