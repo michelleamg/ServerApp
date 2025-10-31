@@ -204,4 +204,5 @@ build/
 
 # Temporary folders
 tmp/
-temp/
+temp/server_backup_*/
+uploads/
