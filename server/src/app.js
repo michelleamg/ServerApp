@@ -11,7 +11,7 @@ import testRoutes from "./routes/test.routes.js"
 import agendaRoutes from "./routes/agenda.routes.js";
 import pacientesRoutes from "./routes/pacientes.routes.js";
 import diarioEmocionesRoutes from "./routes/diarioEmociones.routes.js";
-import { ActividadesRoutes } from "./routes/actividades.routes.js";
+import ActividadesRoutes from "./routes/actividades.routes.js";
 
 const app = express();
 

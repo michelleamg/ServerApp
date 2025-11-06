@@ -2,7 +2,7 @@ import express from "express";
 import {
   getActividadesPaciente,
   postActividadPaciente,
-} from "../controllers/actividadPacienteController.js";
+} from "../controllers/actividadesController.js";
 
 const router = express.Router();
 
