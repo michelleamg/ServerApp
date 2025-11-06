@@ -12,6 +12,7 @@ import agendaRoutes from "./routes/agenda.routes.js";
 import pacientesRoutes from "./routes/pacientes.routes.js";
 import diarioEmocionesRoutes from "./routes/diarioEmociones.routes.js";
 import ActividadesRoutes from "./routes/actividades.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 
 const app = express();
 
@@ -36,8 +37,8 @@ app.use("/api/agenda", agendaRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/pacientes",pacientesRoutes);
 app.use("/api/diario-emociones", diarioEmocionesRoutes);
-
 app.use("/api/actividades", ActividadesRoutes);
+app.use("/api", chatRoutes);
 
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
