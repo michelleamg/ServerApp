@@ -93,7 +93,6 @@ export const ForoController = {
           t.id_tema,
           t.titulo,
           t.descripcion,
-          t.creado_en,
           COALESCE(msgs.total_mensajes, 0) AS total_mensajes
         FROM tema t
         LEFT JOIN (
