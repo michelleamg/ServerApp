@@ -1,10 +1,6 @@
 import pool from "../db/db.js";
 
 export const ForoController = {
-  /**
-   * GET /api/foro/pacientes?id_paciente=#
-   * Lista de foros visibles para un paciente (públicos o de su psicólogo)
-   */
   async getForosParaPacientes(req, res) {
     try {
       const { id_paciente } = req.query;
@@ -18,8 +14,18 @@ export const ForoController = {
           f.titulo,
           f.descripcion,
           IF(f.publico = 1, 'Público', 'Privado') AS tipo,
-          (SELECT COUNT(*) FROM mensaje_foro m WHERE m.id_foro = f.id_foro) AS total_mensajes,
-          (SELECT COUNT(*) FROM foro_participante p WHERE p.id_foro = f.id_foro) AS total_participantes,
+          -- 🔹 Contar mensajes a través de los temas
+          (
+            SELECT COUNT(*) 
+            FROM mensaje_foro mf 
+            JOIN tema t ON mf.id_tema = t.id_tema
+            WHERE t.id_foro = f.id_foro
+          ) AS total_mensajes,
+          (
+            SELECT COUNT(*) 
+            FROM foro_participante p 
+            WHERE p.id_foro = f.id_foro
+          ) AS total_participantes,
           'Psicólogo' AS creador,
           IF(EXISTS(
             SELECT 1 FROM foro_participante fp 
