@@ -81,6 +81,7 @@ export const ForoController = {
 
   // 🔹 Obtener temas de un foro específico
   // 🔹 Obtener temas de un foro específico
+  // 🔹 Obtener temas de un foro específico (formato igual a la web)
   async getTemas(req, res) {
     try {
       const { id_foro } = req.params;
@@ -94,6 +95,7 @@ export const ForoController = {
           t.id_tema,
           t.titulo,
           t.descripcion,
+          DATE_FORMAT(t.creado_en, '%Y-%m-%d') AS fecha,  -- igual que web
           COALESCE(msgs.total_mensajes, 0) AS total_mensajes
         FROM tema t
         LEFT JOIN (
@@ -102,14 +104,19 @@ export const ForoController = {
           GROUP BY id_tema
         ) AS msgs ON msgs.id_tema = t.id_tema
         WHERE t.id_foro = ?
-        ORDER BY t.id_tema DESC;  -- ✅ usamos id_tema en lugar de creado_en
+        ORDER BY t.creado_en DESC;
         `,
         [id_foro]
       );
 
-      return res.json({ success: true, temas: rows });
+      // Formato de respuesta igual que el backend web
+      return res.json({
+        success: true,
+        data: rows,
+        meta: { total: rows.length },
+      });
     } catch (error) {
-      console.error("❌ Error al obtener temas del foro:", error);
+      console.error("❌ Error al obtener temas:", error);
       res.status(500).json({
         success: false,
         message: "Error al obtener temas",
