@@ -95,7 +95,7 @@ export const ForoController = {
           t.id_tema,
           t.titulo,
           t.descripcion,
-          DATE_FORMAT(t.creado_en, '%Y-%m-%d') AS fecha,  -- igual que web
+          DATE_FORMAT(t.fecha_creacion, '%Y-%m-%d') AS fecha,
           COALESCE(msgs.total_mensajes, 0) AS total_mensajes
         FROM tema t
         LEFT JOIN (
