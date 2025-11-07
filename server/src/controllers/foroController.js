@@ -80,6 +80,7 @@ export const ForoController = {
   },
 
   // 🔹 Obtener temas de un foro específico
+  // 🔹 Obtener temas de un foro específico
   async getTemas(req, res) {
     try {
       const { id_foro } = req.params;
@@ -101,7 +102,7 @@ export const ForoController = {
           GROUP BY id_tema
         ) AS msgs ON msgs.id_tema = t.id_tema
         WHERE t.id_foro = ?
-        ORDER BY t.creado_en DESC
+        ORDER BY t.id_tema DESC;  -- ✅ usamos id_tema en lugar de creado_en
         `,
         [id_foro]
       );
@@ -116,4 +117,5 @@ export const ForoController = {
       });
     }
   },
+
 };
