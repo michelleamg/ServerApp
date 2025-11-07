@@ -104,7 +104,7 @@ export const ForoController = {
           GROUP BY id_tema
         ) AS msgs ON msgs.id_tema = t.id_tema
         WHERE t.id_foro = ?
-        ORDER BY t.creado_en DESC;
+        ORDER BY t.fecha_creacion DESC;
         `,
         [id_foro]
       );
