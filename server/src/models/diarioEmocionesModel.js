@@ -1,8 +1,9 @@
-import pool from '../db/db.js';
+// models/diarioEmocionesModel.js
+import pool from "../db/db.js";
 
 const DiarioEmociones = {};
 
-// Guardar una nueva emoción
+// 🔹 Guardar una nueva emoción
 DiarioEmociones.create = async (id_paciente, emocion, nota, fecha) => {
   const [result] = await pool.query(
     `INSERT INTO diario_emociones (id_paciente, emocion, nota, fecha)
@@ -12,21 +13,23 @@ DiarioEmociones.create = async (id_paciente, emocion, nota, fecha) => {
   return result.insertId;
 };
 
-// Obtener todas las emociones del mes actual
+// 🔹 Obtener emociones del mes actual SOLO del paciente indicado
 DiarioEmociones.findByPacienteAndMonth = async (id_paciente, year, month) => {
   const [rows] = await pool.query(
-    `SELECT id_diario, fecha, emocion, nota 
+    `SELECT id_diario, id_paciente, DATE(fecha) AS fecha, emocion, nota
      FROM diario_emociones
-     WHERE id_paciente = ? 
-       AND YEAR(fecha) = ? 
-       AND MONTH(fecha) = ?
+     WHERE id_paciente = ?
+       AND YEAR(DATE(fecha)) = ?
+       AND MONTH(DATE(fecha)) = ?
      ORDER BY fecha DESC`,
     [id_paciente, year, month]
   );
-  return rows;
+
+  // 🔒 Filtro redundante (por seguridad adicional)
+  return rows.filter((r) => r.id_paciente == id_paciente);
 };
 
-// 🔹 (opcional) Obtener última emoción del paciente
+// 🔹 Obtener última emoción del paciente
 DiarioEmociones.findUltima = async (id_paciente) => {
   const sql = `
     SELECT DATE(MAX(fecha)) AS ultima_emocion
@@ -36,4 +39,5 @@ DiarioEmociones.findUltima = async (id_paciente) => {
   const [rows] = await pool.query(sql, [id_paciente]);
   return rows[0]?.ultima_emocion || null;
 };
+
 export default DiarioEmociones;
