@@ -55,10 +55,11 @@ export const ChatModel = {
     }));
   },
 
+  // En la función save, cambia "mensajes" por "mensaje" (si esa es tu tabla real)
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
     const [res] = await pool.query(
-      "INSERT INTO mensajes (id_chat, remitente, contenido) VALUES (?, ?, ?)",
+      "INSERT INTO mensaje (id_chat, remitente, contenido) VALUES (?, ?, ?)", // Cambiado a "mensaje"
       [id_chat, remitente, contenidoCifrado]
     );
     return res.insertId;
