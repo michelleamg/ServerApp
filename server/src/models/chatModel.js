@@ -46,7 +46,7 @@ function decryptMessage(data) {
 export const ChatModel = {
   async getByChat(id_chat) {
     const [rows] = await pool.query(
-      "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensajes WHERE id_chat = ? ORDER BY fecha_envio ASC",
+      "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_chat = ? ORDER BY fecha_envio ASC",
       [id_chat]
     );
     return rows.map((msg) => ({
@@ -75,49 +75,53 @@ export const ChatModel = {
     return rows.length > 0 ? rows[0] : null;
   },
 
-  // 🔹 CORREGIDO: Solo para pacientes, obtiene su chat con el psicólogo
+  // 🔹 SIMPLIFICADO: Obtener información del chat del paciente
   async getPatientChat(id_paciente) {
-    const query = `
-      SELECT 
-        c.id_chat,
-        p.id_psicologo,
-        p.nombre as psicologo_nombre,
-        p.apellidoPaterno as psicologo_apellido_paterno,
-        p.apellidoMaterno as psicologo_apellido_materno,
-        pa.id_paciente,
-        pa.nombre as paciente_nombre,
-        pa.apellido_paterno as paciente_apellido_paterno,
-        pa.apellido_materno as paciente_apellido_materno
-      FROM chat c
-      INNER JOIN psicologo p ON c.id_psicologo = p.id_psicologo
-      INNER JOIN paciente pa ON c.id_paciente = pa.id_paciente
-      WHERE c.id_paciente = ?
-      LIMIT 1
-    `;
-
-    const [rows] = await pool.query(query, [id_paciente]);
+    // Como no hay tabla chat, usamos directamente el id_paciente como id_chat
+    // o buscamos mensajes existentes para ese paciente
+    const [rows] = await pool.query(
+      `SELECT DISTINCT m.id_chat,
+              p.id_psicologo,
+              p.nombre as psicologo_nombre,
+              p.apellidoPaterno as psicologo_apellido_paterno,
+              p.apellidoMaterno as psicologo_apellido_materno,
+              pa.id_paciente,
+              pa.nombre as paciente_nombre,
+              pa.apellido_paterno as paciente_apellido_paterno,
+              pa.apellido_materno as paciente_apellido_materno
+       FROM mensaje m
+       INNER JOIN psicologo p ON m.id_psicologo = p.id_psicologo
+       INNER JOIN paciente pa ON m.id_paciente = pa.id_paciente
+       WHERE m.id_paciente = ?
+       LIMIT 1`,
+      [id_paciente]
+    );
+    
     return rows.length > 0 ? rows[0] : null;
   },
 
-  // 🔹 NUEVO: Crear chat si no existe
+  // 🔹 SIMPLIFICADO: Crear "chat" usando mensajes
   async createChat(id_paciente, id_psicologo) {
-    // Verificar si ya existe un chat
+    // Como no hay tabla chat, usamos una estrategia diferente:
+    // - Podemos usar el id_paciente como id_chat
+    // - O generar un id_chat único basado en paciente+psicologo
+    
+    // Opción 1: Usar el id_paciente como id_chat (más simple)
+    const id_chat = id_paciente;
+    
+    // Verificar si ya existen mensajes para este "chat"
     const [existing] = await pool.query(
-      "SELECT id_chat FROM chat WHERE id_paciente = ? AND id_psicologo = ?",
-      [id_paciente, id_psicologo]
+      "SELECT id_mensaje FROM mensaje WHERE id_chat = ? LIMIT 1",
+      [id_chat]
     );
 
     if (existing.length > 0) {
-      return existing[0].id_chat;
+      return id_chat; // Ya existe conversación
     }
 
-    // Crear nuevo chat
-    const [res] = await pool.query(
-      "INSERT INTO chat (id_paciente, id_psicologo) VALUES (?, ?)",
-      [id_paciente, id_psicologo]
-    );
-
-    return res.insertId;
+    // Si no existe, no creamos nada en la BD porque no hay tabla chat
+    // Simplemente retornamos el id_chat que usaremos
+    return id_chat;
   },
 
   // Función auxiliar para decrypt (hacerla disponible externamente)
