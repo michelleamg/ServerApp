@@ -39,7 +39,7 @@ app.use("/api/tests", testRoutes);
 app.use("/api/pacientes",pacientesRoutes);
 app.use("/api/diario-emociones", diarioEmocionesRoutes);
 app.use("/api/actividades", ActividadesRoutes);
-app.use("/api", chatRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/foros", foroRoutes);
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
