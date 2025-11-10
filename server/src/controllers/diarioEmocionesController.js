@@ -7,11 +7,16 @@ export const DiarioEmocionesController = {
     try {
       const { id_paciente, emocion, nota, fecha } = req.body;
 
+      console.log("📥 Datos recibidos:", { id_paciente, emocion, nota, fecha });
+
       if (!id_paciente || !emocion || !fecha) {
+        console.warn("⚠️ Faltan datos requeridos para registrar emoción");
         return res.status(400).json({ message: "Faltan datos requeridos" });
       }
 
       const newId = await DiarioEmociones.create(id_paciente, emocion, nota, fecha);
+
+      console.log("✅ Emoción guardada con ID:", newId);
 
       return res.status(201).json({
         message: "Emoción registrada correctamente",
