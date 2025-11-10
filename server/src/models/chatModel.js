@@ -46,7 +46,7 @@ function decryptMessage(data) {
 export const ChatModel = {
   async getByChat(id_chat) {
     const [rows] = await pool.query(
-      "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensajes WHERE id_chat = ? ORDER BY fecha_envio ASC",
+      "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_chat = ? ORDER BY fecha_envio ASC",
       [id_chat]
     );
     return rows.map((msg) => ({
