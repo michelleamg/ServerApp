@@ -55,11 +55,10 @@ export const ChatModel = {
     }));
   },
 
-  // En la función save, cambia "mensajes" por "mensaje" (si esa es tu tabla real)
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
     const [res] = await pool.query(
-      "INSERT INTO mensaje (id_chat, remitente, contenido) VALUES (?, ?, ?)", // Cambiado a "mensaje"
+      "INSERT INTO mensaje (id_chat, remitente, contenido) VALUES (?, ?, ?)",
       [id_chat, remitente, contenidoCifrado]
     );
     return res.insertId;
@@ -67,7 +66,7 @@ export const ChatModel = {
 
   async getPsychologistByPatient(id_paciente) {
     const [rows] = await pool.query(
-      `SELECT p.id_psicologo, p.nombre AS nombre_psicologo
+      `SELECT p.id_psicologo, p.nombre, p.apellidoPaterno, p.apellidoMaterno
        FROM psicologo p
        INNER JOIN paciente pa ON pa.id_psicologo = p.id_psicologo
        WHERE pa.id_paciente = ?`,
@@ -75,4 +74,66 @@ export const ChatModel = {
     );
     return rows.length > 0 ? rows[0] : null;
   },
+
+  // 🔹 CORREGIDO: Solo para pacientes, obtiene su chat con el psicólogo
+  async getPatientChat(id_paciente) {
+    const query = `
+      SELECT 
+        c.id_chat,
+        p.id_psicologo,
+        p.nombre as psicologo_nombre,
+        p.apellidoPaterno as psicologo_apellido_paterno,
+        p.apellidoMaterno as psicologo_apellido_materno,
+        pa.id_paciente,
+        pa.nombre as paciente_nombre,
+        pa.apellido_paterno as paciente_apellido_paterno,
+        pa.apellido_materno as paciente_apellido_materno
+      FROM chat c
+      INNER JOIN psicologo p ON c.id_psicologo = p.id_psicologo
+      INNER JOIN paciente pa ON c.id_paciente = pa.id_paciente
+      WHERE c.id_paciente = ?
+      LIMIT 1
+    `;
+
+    const [rows] = await pool.query(query, [id_paciente]);
+    return rows.length > 0 ? rows[0] : null;
+  },
+
+  // 🔹 NUEVO: Crear chat si no existe
+  async createChat(id_paciente, id_psicologo) {
+    // Verificar si ya existe un chat
+    const [existing] = await pool.query(
+      "SELECT id_chat FROM chat WHERE id_paciente = ? AND id_psicologo = ?",
+      [id_paciente, id_psicologo]
+    );
+
+    if (existing.length > 0) {
+      return existing[0].id_chat;
+    }
+
+    // Crear nuevo chat
+    const [res] = await pool.query(
+      "INSERT INTO chat (id_paciente, id_psicologo) VALUES (?, ?)",
+      [id_paciente, id_psicologo]
+    );
+
+    return res.insertId;
+  },
+
+  // Función auxiliar para decrypt (hacerla disponible externamente)
+  decryptMessage(data) {
+    try {
+      const [ivHex, tagHex, encHex] = data.split(":");
+      const iv = Buffer.from(ivHex, "hex");
+      const tag = Buffer.from(tagHex, "hex");
+      const encryptedText = Buffer.from(encHex, "hex");
+      const decipher = crypto.createDecipheriv("aes-256-gcm", AES_KEY, iv);
+      decipher.setAuthTag(tag);
+      const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
+      return decrypted.toString("utf8");
+    } catch (error) {
+      console.error("❌ Error al descifrar mensaje:", error);
+      return "[Mensaje ilegible]";
+    }
+  }
 };
