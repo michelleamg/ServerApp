@@ -54,7 +54,7 @@ app.use("/api/consentimientos", consentimientoRoutes);
 app.use("/api/agenda", agendaRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/pacientes", pacientesRoutes);
-app.use("/api/diario-emociones", diarioEmocionesRoutes);
+app.use("/api/diario_emociones", diarioEmocionesRoutes);
 app.use("/api/actividades", ActividadesRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/foros", foroRoutes);
