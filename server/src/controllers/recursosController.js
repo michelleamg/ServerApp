@@ -1,19 +1,20 @@
-import pool from "../db/db.js";
+import { RecursosModel } from "../models/recursosModel.js";
 
 export const RecursosController = {
-  // Obtener todos los recursos personalizados
+  // 🔹 Obtener recursos asignados a un paciente
   async getRecursos(req, res) {
     try {
-      const [rows] = await pool.query(
-        `SELECT id_actividad, titulo, descripcion, archivo_url, origen, id_psicologo_creador
-         FROM actividad
-         WHERE origen = 'personalizada'
-         ORDER BY id_actividad DESC`
-      );
+      const { id_paciente } = req.params;
 
-      res.json({ success: true, recursos: rows });
+      if (!id_paciente) {
+        return res.status(400).json({ success: false, error: "ID de paciente requerido" });
+      }
+
+      const recursos = await RecursosModel.getRecursosPorPaciente(id_paciente);
+
+      res.json({ success: true, recursos });
     } catch (error) {
-      console.error("❌ Error al obtener recursos:", error);
+      console.error("❌ Error en getRecursos:", error);
       res.status(500).json({ success: false, error: "Error al obtener recursos" });
     }
   },
