@@ -19,6 +19,8 @@ import chatRoutes from "./routes/chat.routes.js";
 import foroRoutes from "./routes/foro.routes.js";
 import { SocketController } from "./controllers/socketController.js";
 import recursosRoutes from "./routes/recursos.routes.js";
+import evidenciaRoutes from "./routes/evidencia.routes.js";
+
 
 const app = express();
 
@@ -60,6 +62,8 @@ app.use("/api/actividades", ActividadesRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/foros", foroRoutes);
 app.use("/api", recursosRoutes);
+
+
 
 
 // Ruta de prueba
