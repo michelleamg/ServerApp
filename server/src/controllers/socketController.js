@@ -105,6 +105,16 @@ export const SocketController = {
           const nuevoMensaje = mensajes.find(m => m.id_mensaje === id_mensaje);
 
           if (nuevoMensaje) {
+            if (nuevoMensaje && nuevoMensaje.fecha_envio) {
+              const fecha = new Date(nuevoMensaje.fecha_envio);
+              nuevoMensaje.fecha_envio = new Intl.DateTimeFormat("es-MX", {
+                timeZone: "America/Mexico_City",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              }).format(fecha);
+            }
+
             // Emitir a todos en la sala del chat
             io.to(`chat_${socket.chatId}`).emit('new_message', nuevoMensaje);
             
