@@ -35,7 +35,7 @@ export const AgendaController = {
         const semanaInicio = primerLunes.clone().add(i, "weeks");
         const semanaFin = semanaInicio.clone().add(6, "days");
 
-        // 3️⃣ Traer TODAS las citas del psicólogo (no solo del paciente)
+        // 3️⃣ Traer SOLO las citas del paciente actual (no de todos)
         const [citas] = await pool.query(
           `SELECT 
               c.id_cita,
@@ -43,20 +43,22 @@ export const AgendaController = {
               c.hora_inicio,
               c.hora_fin,
               c.modalidad,
-              c.estado,
-              p.nombre AS nombre_paciente
+              c.estado
             FROM cita c
             INNER JOIN agenda a ON c.id_agenda = a.id_agenda
-            LEFT JOIN paciente p ON c.id_paciente = p.id_paciente
             WHERE a.id_psicologo = ?
+              AND c.id_paciente = ?
               AND c.fecha BETWEEN ? AND ?
             ORDER BY c.fecha, c.hora_inicio`,
           [
             id_psicologo,
+            id_paciente, // 👈 nuevo filtro
             semanaInicio.format("YYYY-MM-DD"),
             semanaFin.format("YYYY-MM-DD"),
           ]
         );
+
+
 
         // 4️⃣ Agregar estado visual según la fecha actual
         const ahora = moment();
