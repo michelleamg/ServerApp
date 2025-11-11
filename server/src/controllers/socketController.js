@@ -1,4 +1,5 @@
 import { ChatModel } from "../models/chatModel.js";
+import { ForoMensajeModel } from "../models/foroMensajeModel.js";
 
 export const SocketController = {
   initialize(io) {
@@ -127,6 +128,50 @@ export const SocketController = {
         } catch (error) {
           console.error('❌ Error en send_message:', error);
           socket.emit('message_error', { error: 'Error al enviar mensaje: ' + error.message });
+        }
+      });
+      
+//------ FORO MENSAJES EN TIEMPO REAL -----
+            // Unirse a un tema del foro
+      socket.on("foro:joinTema", ({ id_tema }) => {
+        if (!id_tema) return;
+        socket.join(`tema_${id_tema}`);
+        console.log(`👥 Usuario ${socket.id} unido a sala tema_${id_tema}`);
+      });
+
+      // Enviar mensaje al tema
+      socket.on("foro:enviarMensaje", async (payload, callback) => {
+        try {
+          const { id_tema, tipo_usuario, id_paciente, id_psicologo, contenido } = payload;
+
+          if (!id_tema || !contenido) {
+            console.warn("⚠️ Datos incompletos al enviar mensaje foro:", payload);
+            if (callback) callback({ success: false, message: "Datos incompletos" });
+            return;
+          }
+
+          // Guardar el mensaje cifrado
+          const nuevo = await ForoMensajeModel.create({
+            id_tema,
+            tipo_usuario,
+            id_paciente,
+            id_psicologo,
+            contenido,
+          });
+
+          // Emitirlo a todos los que estén en ese tema
+          io.to(`tema_${id_tema}`).emit("foro:nuevoMensaje", nuevo);
+
+          console.log(`💬 Nuevo mensaje foro en tema ${id_tema}:`, nuevo);
+
+          if (callback) callback({ success: true, mensaje: nuevo });
+        } catch (error) {
+          console.error("❌ Error en foro:enviarMensaje:", error);
+          if (callback)
+            callback({
+              success: false,
+              message: "Error al enviar mensaje foro: " + error.message,
+            });
         }
       });
 
