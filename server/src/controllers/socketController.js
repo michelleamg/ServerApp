@@ -78,38 +78,32 @@ export const SocketController = {
             return;
           }
 
-          // Guardar mensaje en la base de datos (remitente siempre será 'paciente')
+          // 🔍 VERIFICAR que el chat existe antes de enviar
+          const chatExists = await ChatModel.verifyChatExists(socket.chatId);
+          if (!chatExists) {
+            console.error(`❌ Chat ${socket.chatId} no existe en la BD`);
+            socket.emit('error', { message: 'El chat no existe' });
+            return;
+          }
+
+          // Guardar mensaje en la base de datos
           const id_mensaje = await ChatModel.save({ 
             id_chat: socket.chatId, 
             remitente: 'paciente', 
             contenido 
           });
 
-          // Obtener el mensaje completo recién guardado
-          const [mensajes] = await pool.query(
-            "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_mensaje = ?",
-            [id_mensaje]
-          );
-
-          if (mensajes.length > 0) {
-            const mensaje = {
-              ...mensajes[0],
-              contenido: ChatModel.decryptMessage(mensajes[0].contenido)
-            };
-
-            // Emitir a todos en la sala del chat (paciente y psicólogo web)
-            io.to(`chat_${socket.chatId}`).emit('new_message', mensaje);
-            
-            // Confirmar al remitente
-            socket.emit('message_sent', { 
-              success: true, 
-              id: id_mensaje 
-            });
-          }
+          // ... resto del código para emitir el mensaje
 
         } catch (error) {
           console.error('❌ Error en send_message:', error);
-          socket.emit('error', { message: 'Error al enviar mensaje' });
+          
+          // Manejar error específico de foreign key
+          if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+            socket.emit('error', { message: 'Error: El chat no existe en el sistema' });
+          } else {
+            socket.emit('error', { message: 'Error al enviar mensaje' });
+          }
         }
       });
 

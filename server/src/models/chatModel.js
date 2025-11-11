@@ -124,6 +124,19 @@ export const ChatModel = {
     return id_chat;
   },
 
+  async verifyChatExists(id_chat) {
+    try {
+      const [rows] = await pool.query(
+        "SELECT id_chat FROM chat WHERE id_chat = ?",
+        [id_chat]
+      );
+      return rows.length > 0;
+    } catch (error) {
+      console.error('❌ Error verificando chat:', error);
+      return false;
+    }
+  },
+
   // Función auxiliar para decrypt (hacerla disponible externamente)
   decryptMessage(data) {
     try {
@@ -139,5 +152,6 @@ export const ChatModel = {
       console.error("❌ Error al descifrar mensaje:", error);
       return "[Mensaje ilegible]";
     }
+    
   }
 };
