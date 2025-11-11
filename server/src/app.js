@@ -63,9 +63,6 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/foros", foroRoutes);
 app.use("/api", recursosRoutes);
 
-
-
-
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong", timestamp: new Date() });
