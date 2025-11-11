@@ -58,50 +58,63 @@ export const ChatModel = {
       fecha_envio: this.convertToMexicoTime(msg.fecha_envio)
     }));
   },
-
-  // AÑADE esta función al modelo:
-    convertToMexicoTime(date) {
-      if (!date) return '--:--';
+  
+  convertToMexicoTime(date) {
+    if (!date) return '--:--';
+    
+    try {
+      const fecha = new Date(date);
       
-      try {
-        // Si ya es un string formateado, devolverlo tal cual
-        if (typeof date === 'string' && (date.includes('a. m.') || date.includes('p. m.'))) {
-          return date;
-        }
+      if (isNaN(fecha.getTime())) {
+        console.log('❌ Fecha inválida en backend:', date);
+        return '--:--';
+      }
+      
+      // 🔥 DETECTAR SI ES UN MENSAJE VIEJO CON HORA UTC
+      const horas = fecha.getHours();
+      const minutos = fecha.getMinutes();
+      
+      // Si la hora es mayor a 18:00 (6 p.m.), probablemente es un mensaje viejo en UTC
+      // Ejemplo: 22:00 UTC = 16:00 México, pero se está mostrando como 22:00
+      if (horas >= 18) {
+        console.log('🕒 Detectado mensaje viejo con hora UTC:', fecha.toISOString());
         
-        const fecha = new Date(date);
+        // Restar 6 horas para convertir UTC a México
+        fecha.setHours(fecha.getHours() - 6);
         
-        // Validar que la fecha sea válida
-        if (isNaN(fecha.getTime())) {
-          console.log('❌ Fecha inválida en backend:', date);
-          return '--:--';
-        }
-        
-        // 🔥 USAR MÉTODO CONFIABLE - Intl.DateTimeFormat
-        const formatter = new Intl.DateTimeFormat('es-MX', {
-          timeZone: 'America/Mexico_City',
+        // Formatear la hora corregida
+        return fecha.toLocaleTimeString('es-MX', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: true
         });
-        
-        return formatter.format(fecha);
-        
-      } catch (error) {
-        console.error('❌ Error convirtiendo hora en backend:', error);
-        
-        // Fallback extremo: mostrar la hora tal cual
-        try {
-          return new Date(date).toLocaleTimeString('es-MX', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-          });
-        } catch {
-          return '--:--';
-        }
       }
-    },
+      
+      // Para mensajes nuevos, usar la conversión normal con timezone
+      const formatter = new Intl.DateTimeFormat('es-MX', {
+        timeZone: 'America/Mexico_City',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return formatter.format(fecha);
+      
+    } catch (error) {
+      console.error('❌ Error convirtiendo hora en backend:', error);
+      
+      // Fallback simple
+      try {
+        return new Date(date).toLocaleTimeString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+      } catch {
+        return '--:--';
+      }
+    }
+  },
 
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
