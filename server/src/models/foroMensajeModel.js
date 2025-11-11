@@ -1,5 +1,5 @@
 import pool from "../db/db.js";
-import { encryptMessage, decryptMessage } from "../utils/cryptoUtils.js"; // ✅ usamos el helper
+import { encryptMessage, decryptMessage } from "../utils/cryptoUtils.js";
 
 export const ForoMensajeModel = {
   // 📥 Obtener mensajes descifrados de un tema
@@ -19,7 +19,7 @@ export const ForoMensajeModel = {
       LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
       LEFT JOIN psicologo ps ON ps.id_psicologo = mf.id_psicologo
       WHERE mf.id_tema = ?
-      ORDER BY mf.fecha_creacion ASC;
+      ORDER BY mf.fecha_envio ASC;
       `,
       [id_tema]
     );
@@ -49,8 +49,9 @@ export const ForoMensajeModel = {
       tipo_usuario,
       id_paciente,
       id_psicologo,
-      contenido, // descifrado (para enviar al front)
+      contenido, // descifrado para el front
       fecha_envio: new Date(),
     };
   },
 };
+
