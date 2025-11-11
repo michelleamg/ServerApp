@@ -17,17 +17,26 @@ export const ForoController = {
           f.titulo,
           f.descripcion,
           IF(f.publico = 1, 'Público', 'Privado') AS tipo,
+          COALESCE(temas.total_temas, 0) AS total_temas,
           COALESCE(msgs.total_mensajes, 0) AS total_mensajes,
           COALESCE(parts.total_participantes, 0) AS total_participantes,
           'Psicólogo' AS creador,
           IF(fp.id_paciente IS NOT NULL, 1, 0) AS unido
         FROM foro f
+        -- 🔹 Subconsulta para contar temas por foro
+        LEFT JOIN (
+          SELECT id_foro, COUNT(id_tema) AS total_temas
+          FROM tema
+          GROUP BY id_foro
+        ) AS temas ON temas.id_foro = f.id_foro
+        -- 🔹 Subconsulta para contar mensajes
         LEFT JOIN (
           SELECT t.id_foro, COUNT(mf.id_mensaje_foro) AS total_mensajes
           FROM tema t
           LEFT JOIN mensaje_foro mf ON t.id_tema = mf.id_tema
           GROUP BY t.id_foro
         ) AS msgs ON msgs.id_foro = f.id_foro
+        -- 🔹 Subconsulta para participantes
         LEFT JOIN (
           SELECT id_foro, COUNT(id_participante) AS total_participantes
           FROM foro_participante
@@ -36,13 +45,14 @@ export const ForoController = {
         LEFT JOIN foro_participante fp
           ON fp.id_foro = f.id_foro AND fp.id_paciente = ?
         WHERE f.publico = 1
-           OR f.id_psicologo_creador = (
+          OR f.id_psicologo_creador = (
                 SELECT id_psicologo FROM paciente WHERE id_paciente = ?
-             )
+            )
         ORDER BY f.id_foro DESC;
         `,
         [id_paciente, id_paciente]
       );
+
 
       return res.json({ success: true, foros: rows });
     } catch (error) {
