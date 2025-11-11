@@ -26,25 +26,23 @@ export const ForoMensajeModel = {
 
     // ✅ Procesar y descifrar
     return rows.map((msg) => {
-      let contenidoDescifrado = "[Mensaje ilegible]";
-
-      try {
-        // Si tiene formato de cifrado (iv:tag:cipher)
-        if (msg.contenido && msg.contenido.includes(":")) {
-          contenidoDescifrado = decryptMessage(msg.contenido);
-        } else {
-          // Mensaje plano (antiguo)
-          contenidoDescifrado = msg.contenido || "[Mensaje vacío]";
+        let contenidoDescifrado = "[Mensaje ilegible]";
+        try {
+            const texto = msg.contenido || ""; // evita null
+            if (texto && texto.includes(":")) {
+            contenidoDescifrado = decryptMessage(texto);
+            } else {
+            contenidoDescifrado = texto || "[Mensaje vacío]";
+            }
+        } catch (err) {
+            console.error("⚠️ Error al descifrar mensaje:", err.message);
+            contenidoDescifrado = msg.contenido || "[Mensaje ilegible]";
         }
-      } catch (err) {
-        console.error("⚠️ Error al descifrar mensaje:", err.message);
-        contenidoDescifrado = msg.contenido || "[Mensaje ilegible]";
-      }
 
-      return {
-        ...msg,
-        contenido: contenidoDescifrado,
-      };
+        return {
+            ...msg,
+            contenido: contenidoDescifrado,
+        };
     });
   },
 
