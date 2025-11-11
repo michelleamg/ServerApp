@@ -100,34 +100,37 @@ export const ChatModel = {
     return rows.length > 0 ? rows[0] : null;
   },
 
-  // 🔹 SIMPLIFICADO: Crear "chat" usando mensajes
   async createChat(id_paciente, id_psicologo) {
-    // Como no hay tabla chat, usamos una estrategia diferente:
-    // - Podemos usar el id_paciente como id_chat
-    // - O generar un id_chat único basado en paciente+psicologo
-    
-    // Opción 1: Usar el id_paciente como id_chat (más simple)
-    const id_chat = id_paciente;
-    
-    // Verificar si ya existen mensajes para este "chat"
-    const [existing] = await pool.query(
-      "SELECT id_mensaje FROM mensaje WHERE id_chat = ? LIMIT 1",
-      [id_chat]
-    );
+    try {
+      // 1. Verificar si ya existe un chat para este paciente-psicólogo
+      const [existingChats] = await pool.query(
+        "SELECT id_chat FROM chat WHERE id_paciente = ? AND id_psicologo = ?",
+        [id_paciente, id_psicologo]
+      );
 
-    if (existing.length > 0) {
-      return id_chat; // Ya existe conversación
+      if (existingChats.length > 0) {
+        return existingChats[0].id_chat;
+      }
+
+      // 2. Si no existe, crear nuevo chat
+      const [result] = await pool.query(
+        "INSERT INTO chat (id_paciente, id_psicologo) VALUES (?, ?)",
+        [id_paciente, id_psicologo]
+      );
+
+      console.log(`✅ Nuevo chat creado: ${result.insertId} para paciente ${id_paciente}`);
+      return result.insertId;
+
+    } catch (error) {
+      console.error('❌ Error creando chat:', error);
+      throw error;
     }
-
-    // Si no existe, no creamos nada en la BD porque no hay tabla chat
-    // Simplemente retornamos el id_chat que usaremos
-    return id_chat;
   },
 
-  /*async verifyChatExists(id_chat) {
+  async verifyChatExists(id_chat) {
     try {
       const [rows] = await pool.query(
-        "SELECT id_chat FROM mensaje WHERE id_chat = ?",
+        "SELECT id_chat FROM chat WHERE id_chat = ?",
         [id_chat]
       );
       return rows.length > 0;
@@ -135,7 +138,15 @@ export const ChatModel = {
       console.error('❌ Error verificando chat:', error);
       return false;
     }
-  },*/
+  },
+  
+  async getExistingChat(id_paciente, id_psicologo) {
+    const [rows] = await pool.query(
+      "SELECT id_chat FROM chat WHERE id_paciente = ? AND id_psicologo = ?",
+      [id_paciente, id_psicologo]
+    );
+    return rows.length > 0 ? rows[0].id_chat : null;
+  },
 
   decryptMessage(data) {
     try {

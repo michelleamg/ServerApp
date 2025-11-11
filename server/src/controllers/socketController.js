@@ -5,7 +5,6 @@ export const SocketController = {
     io.on('connection', (socket) => {
       console.log('🔌 Usuario conectado:', socket.id);
 
-      // 🔹 Obtener o crear chat para el paciente
       socket.on('init_chat', async (data) => {
         try {
           const { id_paciente } = data;
@@ -23,8 +22,8 @@ export const SocketController = {
             return;
           }
 
-          // 2. Obtener o crear chat (usando id_paciente como id_chat)
-          const id_chat = id_paciente; // Simplificado
+          // 2. Obtener o crear chat EN LA TABLA CHAT
+          const id_chat = await ChatModel.createChat(id_paciente, psicologo.id_psicologo);
           
           // 3. Unirse al chat
           socket.join(`chat_${id_chat}`);
@@ -68,7 +67,6 @@ export const SocketController = {
         }
       });
 
-      // 🔹 Enviar mensaje - VERSIÓN CORREGIDA
       socket.on('send_message', async (data) => {
         try {
           const { contenido } = data;
@@ -80,7 +78,15 @@ export const SocketController = {
 
           console.log(`📤 Intentando enviar mensaje al chat ${socket.chatId}:`, contenido);
 
-          // 🔥 CORRECCIÓN: Guardar mensaje SIN verificar existencia del chat
+          // Verificar que el chat existe en la tabla chat
+          const chatExists = await ChatModel.verifyChatExists(socket.chatId);
+          if (!chatExists) {
+            console.error(`❌ Chat ${socket.chatId} no existe en la BD`);
+            socket.emit('message_error', { error: 'El chat no existe' });
+            return;
+          }
+
+          // Guardar mensaje en la base de datos
           const id_mensaje = await ChatModel.save({ 
             id_chat: socket.chatId, 
             remitente: 'paciente', 
