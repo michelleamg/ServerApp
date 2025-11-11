@@ -3,7 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-
+// 📁 Configuración de almacenamiento local
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.resolve("uploads/evidencias");
