@@ -18,6 +18,7 @@ import ActividadesRoutes from "./routes/actividades.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import foroRoutes from "./routes/foro.routes.js";
 import { SocketController } from "./controllers/socketController.js";
+import recursosRoutes from "./routes/recursos.routes.js";
 
 const app = express();
 
@@ -58,6 +59,8 @@ app.use("/api/diario_emociones", diarioEmocionesRoutes);
 app.use("/api/actividades", ActividadesRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/foros", foroRoutes);
+app.use("/api", recursosRoutes);
+
 
 // Ruta de prueba
 app.get("/api/ping", (req, res) => {
