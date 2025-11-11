@@ -6,7 +6,6 @@ import { dirname, resolve } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// ✅ Carga de variables de entorno
 dotenv.config({ path: resolve(__dirname, "../../../.env") });
 
 const AES_KEY = process.env.CHAT_AES_KEY
@@ -18,7 +17,6 @@ if (!AES_KEY || AES_KEY.length !== 32) {
   process.exit(1);
 }
 
-// 🔐 Encriptar texto plano con AES-256-GCM
 export function encryptMessage(text) {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", AES_KEY, iv);
@@ -27,7 +25,6 @@ export function encryptMessage(text) {
   return `${iv.toString("hex")}:${tag.toString("hex")}:${encrypted.toString("hex")}`;
 }
 
-// 🔓 Desencriptar texto cifrado en formato iv:tag:ciphertext
 export function decryptMessage(data) {
   try {
     const [ivHex, tagHex, encHex] = (data || "").split(":");
@@ -43,6 +40,3 @@ export function decryptMessage(data) {
     return "[Mensaje ilegible]";
   }
 }
-
-// ✅ Export explícito final (ESM-friendly para PM2)
-export { encryptMessage, decryptMessage };
