@@ -45,41 +45,25 @@ function decryptMessage(data) {
 
 export const ChatModel = {
 
-  async getByChat(id_chat) {
-    const [rows] = await pool.query(
-      "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_chat = ? ORDER BY fecha_envio ASC",
-      [id_chat]
-    );
+      async getByChat(id_chat) {
+      const [rows] = await pool.query(
+        "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_chat = ? ORDER BY fecha_envio ASC",
+        [id_chat]
+      );
+
+      return rows.map((msg) => ({
+        ...msg,
+        contenido: decryptMessage(msg.contenido),
+        // 👉 convertir UTC → hora México correctamente
+        fecha_envio: new Intl.DateTimeFormat("es-MX", {
+          timeZone: "America/Mexico_City",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }).format(new Date(msg.fecha_envio)),
+      }));
+    },
     
-   return rows.map((msg) => ({
-    ...msg,
-    contenido: decryptMessage(msg.contenido),
-    fecha_envio: ChatModel.convertToMexicoTime(msg.fecha_envio),
-  }));
-
-  },
-
-  convertToMexicoTime(date) {
-  try {
-    if (!date) return "--:--";
-    const fechaUTC = new Date(date);
-
-    // ⚠️ Si MySQL guarda en UTC, convertimos correctamente a CDMX (UTC-6)
-    const formatter = new Intl.DateTimeFormat("es-MX", {
-      timeZone: "America/Mexico_City",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    return formatter.format(fechaUTC);
-  } catch (error) {
-    console.error("❌ Error convirtiendo hora:", error);
-    return "--:--";
-  }
-},
-
-
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
     const [res] = await pool.query(
