@@ -42,7 +42,7 @@ const io = new Server(httpServer, {
 
 // 👉 Servir archivos estáticos
 app.use("/docs", express.static(path.join(__dirname, "../public/docs")));
-
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Middlewares
 app.use(morgan("dev"));
 app.use(express.json());
