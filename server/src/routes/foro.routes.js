@@ -15,4 +15,5 @@ router.post("/:id_foro/unirse", ForoController.unirseForo);
 router.get("/temas/:id_tema/mensajes", ForoMensajeController.getMensajes);
 router.post("/temas/:id_tema/mensajes", ForoMensajeController.crearMensaje);
 
+
 export default router;
