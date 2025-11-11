@@ -18,7 +18,6 @@ import ActividadesRoutes from "./routes/actividades.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import foroRoutes from "./routes/foro.routes.js";
 import { SocketController } from "./controllers/socketController.js";
-import foroRoutes from "./routes/foro.routes.js";
 
 const app = express();
 
