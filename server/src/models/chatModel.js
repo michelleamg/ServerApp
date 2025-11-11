@@ -1,3 +1,4 @@
+// src/models/chatModel.js
 import pool from "../db/db.js";
 import crypto from "crypto";
 import dotenv from "dotenv";
@@ -7,17 +8,15 @@ import { dirname, resolve } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Carga el .env desde el nivel superior del proyecto (server/.env)
+// Cargar .env desde server/.env (sube: models -> src -> server)
 dotenv.config({ path: resolve(__dirname, "../../../.env") });
 
-const AES_KEY = process.env.CHAT_AES_KEY
-  ? Buffer.from(process.env.CHAT_AES_KEY, "hex")
-  : null;
-
-if (!AES_KEY || AES_KEY.length !== 32) {
-  console.error("⚠️ Clave CHAT_AES_KEY inválida. Debe tener 32 bytes (64 hex).");
+const keyHex = process.env.CHAT_AES_KEY;
+if (!keyHex || keyHex.length !== 64) {
+  console.error("⚠️ CHAT_AES_KEY inválida. Debe ser 64 caracteres hex (32 bytes).");
   process.exit(1);
 }
+const AES_KEY = Buffer.from(keyHex, "hex");
 
 function encryptMessage(text) {
   const iv = crypto.randomBytes(12);
@@ -27,15 +26,20 @@ function encryptMessage(text) {
   return `${iv.toString("hex")}:${tag.toString("hex")}:${encrypted.toString("hex")}`;
 }
 
-function decryptMessage(data) {
+function decryptMessageOrPlaceholder(data) {
   try {
+    if (!data) return "";
     const [ivHex, tagHex, encHex] = data.split(":");
     const iv = Buffer.from(ivHex, "hex");
     const tag = Buffer.from(tagHex, "hex");
     const encryptedText = Buffer.from(encHex, "hex");
+
     const decipher = crypto.createDecipheriv("aes-256-gcm", AES_KEY, iv);
     decipher.setAuthTag(tag);
-    const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
+    const decrypted = Buffer.concat([
+      decipher.update(encryptedText),
+      decipher.final(),
+    ]);
     return decrypted.toString("utf8");
   } catch (error) {
     console.error("❌ Error al descifrar mensaje:", error);
@@ -43,83 +47,50 @@ function decryptMessage(data) {
   }
 }
 
-export const ChatModel = {
+function toMexicoTime(date) {
+  if (!date) return "--:--";
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) {
+      console.log("❌ Fecha inválida en backend:", date);
+      return "--:--";
+    }
+    return d.toLocaleString("es-MX", {
+      timeZone: "America/Mexico_City",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch (error) {
+    console.error("❌ Error convirtiendo hora:", error);
+    return "--:--";
+  }
+}
 
+export const ChatModel = {
   async getByChat(id_chat) {
     const [rows] = await pool.query(
-      "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_chat = ? ORDER BY fecha_envio ASC",
+      `SELECT id_mensaje, remitente, contenido, fecha_envio, leido
+       FROM mensaje
+       WHERE id_chat = ?
+       ORDER BY fecha_envio ASC`,
       [id_chat]
     );
-    
-    return rows.map((msg) => ({
-      ...msg,
-      contenido: decryptMessage(msg.contenido),
-      // ⚠️ ENVIAR EL TIMESTAMP ORIGINAL, NO CONVERTIDO
-      // fecha_envio: msg.fecha_envio // ← Así el frontend puede crear Date objects
-    }));
-  },
 
-  convertToMexicoTime(date) {
-    if (!date) return '--:--';
-    
-    try {
-      const fecha = new Date(date);
-      
-      if (isNaN(fecha.getTime())) {
-        console.log('❌ Fecha inválida en backend:', date);
-        return '--:--';
-      }
-      
-      // 🔥 DETECTAR SI ES UN MENSAJE VIEJO CON HORA UTC
-      const horas = fecha.getHours();
-      const minutos = fecha.getMinutes();
-      
-      // Si la hora es mayor a 18:00 (6 p.m.), probablemente es un mensaje viejo en UTC
-      // Ejemplo: 22:00 UTC = 16:00 México, pero se está mostrando como 22:00
-      if (horas >= 18) {
-        console.log('🕒 Detectado mensaje viejo con hora UTC:', fecha.toISOString());
-        
-        // Restar 6 horas para convertir UTC a México
-        fecha.setHours(fecha.getHours() - 6);
-        
-        // Formatear la hora corregida
-        return fecha.toLocaleTimeString('es-MX', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        });
-      }
-      
-      // Para mensajes nuevos, usar la conversión normal con timezone
-      const formatter = new Intl.DateTimeFormat('es-MX', {
-        timeZone: 'America/Mexico_City',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-      return formatter.format(fecha);
-      
-    } catch (error) {
-      console.error('❌ Error convirtiendo hora en backend:', error);
-      
-      // Fallback simple
-      try {
-        return new Date(date).toLocaleTimeString('es-MX', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        });
-      } catch {
-        return '--:--';
-      }
-    }
+    return rows.map((msg) => ({
+      id_mensaje: msg.id_mensaje,
+      remitente: msg.remitente,
+      contenido: decryptMessageOrPlaceholder(msg.contenido),
+      fecha_envio: toMexicoTime(msg.fecha_envio),
+      leido: msg.leido,
+    }));
   },
 
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
     const [res] = await pool.query(
-      "INSERT INTO mensaje (id_chat, remitente, contenido) VALUES (?, ?, ?)",
+      `INSERT INTO mensaje (id_chat, remitente, contenido)
+       VALUES (?, ?, ?)`,
       [id_chat, remitente, contenidoCifrado]
     );
     return res.insertId;
@@ -127,102 +98,49 @@ export const ChatModel = {
 
   async getPsychologistByPatient(id_paciente) {
     const [rows] = await pool.query(
-      `SELECT p.id_psicologo, p.nombre, p.apellidoPaterno, p.apellidoMaterno
-       FROM psicologo p
-       INNER JOIN paciente pa ON pa.id_psicologo = p.id_psicologo
-       WHERE pa.id_paciente = ?`,
-      [id_paciente]
-    );
-    return rows.length > 0 ? rows[0] : null;
-  },
-
-  // 🔹 SIMPLIFICADO: Obtener información del chat del paciente
-  async getPatientChat(id_paciente) {
-    // Como no hay tabla chat, usamos directamente el id_paciente como id_chat
-    // o buscamos mensajes existentes para ese paciente
-    const [rows] = await pool.query(
-      `SELECT DISTINCT m.id_chat,
-              p.id_psicologo,
-              p.nombre as psicologo_nombre,
-              p.apellidoPaterno as psicologo_apellido_paterno,
-              p.apellidoMaterno as psicologo_apellido_materno,
-              pa.id_paciente,
-              pa.nombre as paciente_nombre,
-              pa.apellido_paterno as paciente_apellido_paterno,
-              pa.apellido_materno as paciente_apellido_materno
-       FROM mensaje m
-       INNER JOIN psicologo p ON m.id_psicologo = p.id_psicologo
-       INNER JOIN paciente pa ON m.id_paciente = pa.id_paciente
-       WHERE m.id_paciente = ?
+      `SELECT p.id_psicologo,
+              p.nombre,
+              p.apellidoPaterno,
+              p.apellidoMaterno
+       FROM paciente pa
+       JOIN psicologo p ON pa.id_psicologo = p.id_psicologo
+       WHERE pa.id_paciente = ?
        LIMIT 1`,
       [id_paciente]
     );
-    
-    return rows.length > 0 ? rows[0] : null;
-  },
-
-  async createChat(id_paciente, id_psicologo) {
-    try {
-      // 1. Verificar si ya existe un chat para este paciente-psicólogo
-      const [existingChats] = await pool.query(
-        "SELECT id_chat FROM chat WHERE id_paciente = ? AND id_psicologo = ?",
-        [id_paciente, id_psicologo]
-      );
-
-      if (existingChats.length > 0) {
-        return existingChats[0].id_chat;
-      }
-
-      // 2. Si no existe, crear nuevo chat
-      const [result] = await pool.query(
-        "INSERT INTO chat (id_paciente, id_psicologo) VALUES (?, ?)",
-        [id_paciente, id_psicologo]
-      );
-
-      console.log(`✅ Nuevo chat creado: ${result.insertId} para paciente ${id_paciente}`);
-      return result.insertId;
-
-    } catch (error) {
-      console.error('❌ Error creando chat:', error);
-      throw error;
-    }
-  },
-
-  async verifyChatExists(id_chat) {
-    try {
-      const [rows] = await pool.query(
-        "SELECT id_chat FROM chat WHERE id_chat = ?",
-        [id_chat]
-      );
-      return rows.length > 0;
-    } catch (error) {
-      console.error('❌ Error verificando chat:', error);
-      return false;
-    }
+    return rows[0] || null;
   },
 
   async getExistingChat(id_paciente, id_psicologo) {
     const [rows] = await pool.query(
-      "SELECT id_chat FROM chat WHERE id_paciente = ? AND id_psicologo = ?",
+      `SELECT id_chat
+       FROM chat
+       WHERE id_paciente = ? AND id_psicologo = ?
+       LIMIT 1`,
       [id_paciente, id_psicologo]
     );
-    return rows.length > 0 ? rows[0].id_chat : null;
+    return rows[0]?.id_chat || null;
   },
 
-  decryptMessage(data) {
-    try {
-      const [ivHex, tagHex, encHex] = data.split(":");
-      const iv = Buffer.from(ivHex, "hex");
-      const tag = Buffer.from(tagHex, "hex");
-      const encryptedText = Buffer.from(encHex, "hex");
-      const decipher = crypto.createDecipheriv("aes-256-gcm", AES_KEY, iv);
-      decipher.setAuthTag(tag);
-      const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
-      return decrypted.toString("utf8");
-    } catch (error) {
-      console.error("❌ Error al descifrar mensaje:", error);
-      return "[Mensaje ilegible]";
-    }
-    
-  }
+  async createChat(id_paciente, id_psicologo) {
+    const existing = await this.getExistingChat(id_paciente, id_psicologo);
+    if (existing) return existing;
+
+    const [res] = await pool.query(
+      `INSERT INTO chat (id_paciente, id_psicologo)
+       VALUES (?, ?)`,
+      [id_paciente, id_psicologo]
+    );
+
+    console.log(`✅ Nuevo chat creado ${res.insertId} para paciente ${id_paciente}`);
+    return res.insertId;
+  },
+
+  async verifyChatExists(id_chat) {
+    const [rows] = await pool.query(
+      `SELECT id_chat FROM chat WHERE id_chat = ? LIMIT 1`,
+      [id_chat]
+    );
+    return rows.length > 0;
+  },
 };
