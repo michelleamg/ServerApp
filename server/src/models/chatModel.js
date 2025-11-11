@@ -60,41 +60,48 @@ export const ChatModel = {
   },
 
   // AÑADE esta función al modelo:
-  convertToMexicoTime(date) {
-    if (!date) return '--:--';
-    
-    try {
-      // Si ya es un string formateado, devolverlo tal cual
-      if (typeof date === 'string' && (date.includes('a. m.') || date.includes('p. m.'))) {
-        return date;
+    convertToMexicoTime(date) {
+      if (!date) return '--:--';
+      
+      try {
+        // Si ya es un string formateado, devolverlo tal cual
+        if (typeof date === 'string' && (date.includes('a. m.') || date.includes('p. m.'))) {
+          return date;
+        }
+        
+        const fecha = new Date(date);
+        
+        // Validar que la fecha sea válida
+        if (isNaN(fecha.getTime())) {
+          console.log('❌ Fecha inválida en backend:', date);
+          return '--:--';
+        }
+        
+        // 🔥 USAR MÉTODO CONFIABLE - Intl.DateTimeFormat
+        const formatter = new Intl.DateTimeFormat('es-MX', {
+          timeZone: 'America/Mexico_City',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        return formatter.format(fecha);
+        
+      } catch (error) {
+        console.error('❌ Error convirtiendo hora en backend:', error);
+        
+        // Fallback extremo: mostrar la hora tal cual
+        try {
+          return new Date(date).toLocaleTimeString('es-MX', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+        } catch {
+          return '--:--';
+        }
       }
-      
-      const fecha = new Date(date);
-      
-      // Validar que la fecha sea válida
-      if (isNaN(fecha.getTime())) {
-        console.log('❌ Fecha inválida en backend:', date);
-        return '--:--';
-      }
-      
-      // Convertir a hora de México
-      return fecha.toLocaleString('es-MX', {
-        timeZone: 'America/Mexico_City',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-    } catch (error) {
-      console.error('❌ Error convirtiendo hora en backend:', error);
-      // Fallback: devolver la hora sin conversión
-      return new Date(date).toLocaleTimeString('es-MX', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-    }
-  },
+    },
 
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
