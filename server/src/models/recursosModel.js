@@ -1,4 +1,3 @@
-// models/recursosModel.js
 import pool from "../db/db.js";
 
 export const RecursosModel = {
@@ -13,7 +12,8 @@ export const RecursosModel = {
          a.id_psicologo_creador,
          aa.instrucciones_personalizadas,
          aa.estado,
-         aa.fecha_asignacion
+         aa.fecha_asignacion,
+         aa.fecha_limite
        FROM actividad_asignada aa
        INNER JOIN actividad a ON a.id_actividad = aa.id_actividad
        WHERE aa.id_paciente = ?
