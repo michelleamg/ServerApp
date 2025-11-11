@@ -51,12 +51,12 @@ export const ChatModel = {
       [id_chat]
     );
     
-    return rows.map((msg) => ({
-      ...msg,
-      contenido: decryptMessage(msg.contenido),
-      // ⚠️ ENVIAR EL TIMESTAMP ORIGINAL, NO CONVERTIDO
-      // fecha_envio: msg.fecha_envio // ← Así el frontend puede crear Date objects
-    }));
+   return rows.map((msg) => ({
+    ...msg,
+    contenido: decryptMessage(msg.contenido),
+    fecha_envio: ChatModel.convertToMexicoTime(msg.fecha_envio)
+  }));
+
   },
 
   convertToMexicoTime(date) {
@@ -70,16 +70,12 @@ export const ChatModel = {
         return '--:--';
       }
       
-      // 🔥 DETECTAR SI ES UN MENSAJE VIEJO CON HORA UTC
       const horas = fecha.getHours();
       const minutos = fecha.getMinutes();
       
-      // Si la hora es mayor a 18:00 (6 p.m.), probablemente es un mensaje viejo en UTC
-      // Ejemplo: 22:00 UTC = 16:00 México, pero se está mostrando como 22:00
       if (horas >= 18) {
         console.log('🕒 Detectado mensaje viejo con hora UTC:', fecha.toISOString());
         
-        // Restar 6 horas para convertir UTC a México
         fecha.setHours(fecha.getHours() - 6);
         
         // Formatear la hora corregida
