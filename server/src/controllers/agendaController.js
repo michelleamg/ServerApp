@@ -1,5 +1,6 @@
 import pool from "../db/db.js";
 import moment from "moment";
+import { io } from "../app.js";
 
 export const AgendaController = {
   /* ========================================================
