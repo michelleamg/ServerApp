@@ -54,63 +54,31 @@ export const ChatModel = {
    return rows.map((msg) => ({
     ...msg,
     contenido: decryptMessage(msg.contenido),
-    fecha_envio: ChatModel.convertToMexicoTime(msg.fecha_envio)
+    fecha_envio: ChatModel.convertToMexicoTime(msg.fecha_envio),
   }));
 
   },
 
   convertToMexicoTime(date) {
-    if (!date) return '--:--';
-    
-    try {
-      const fecha = new Date(date);
-      
-      if (isNaN(fecha.getTime())) {
-        console.log('❌ Fecha inválida en backend:', date);
-        return '--:--';
-      }
-      
-      const horas = fecha.getHours();
-      const minutos = fecha.getMinutes();
-      
-      if (horas >= 18) {
-        console.log('🕒 Detectado mensaje viejo con hora UTC:', fecha.toISOString());
-        
-        fecha.setHours(fecha.getHours() - 6);
-        
-        // Formatear la hora corregida
-        return fecha.toLocaleTimeString('es-MX', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        });
-      }
-      
-      // Para mensajes nuevos, usar la conversión normal con timezone
-      const formatter = new Intl.DateTimeFormat('es-MX', {
-        timeZone: 'America/Mexico_City',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-      return formatter.format(fecha);
-      
-    } catch (error) {
-      console.error('❌ Error convirtiendo hora en backend:', error);
-      
-      // Fallback simple
-      try {
-        return new Date(date).toLocaleTimeString('es-MX', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        });
-      } catch {
-        return '--:--';
-      }
-    }
-  },
+  try {
+    if (!date) return "--:--";
+    const fechaUTC = new Date(date);
+
+    // ⚠️ Si MySQL guarda en UTC, convertimos correctamente a CDMX (UTC-6)
+    const formatter = new Intl.DateTimeFormat("es-MX", {
+      timeZone: "America/Mexico_City",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    return formatter.format(fechaUTC);
+  } catch (error) {
+    console.error("❌ Error convirtiendo hora:", error);
+    return "--:--";
+  }
+},
+
 
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
