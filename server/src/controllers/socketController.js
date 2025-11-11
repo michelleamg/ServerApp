@@ -42,7 +42,12 @@ export const SocketController = {
             }
           });
 
-          console.log(`💬 Chat ${id_chat} inicializado para paciente ${id_paciente}`);
+          // 🔥 CRÍTICO: Cargar mensajes existentes automáticamente
+          console.log(`📨 Cargando mensajes existentes para chat ${id_chat}`);
+          const mensajesExistentes = await ChatModel.getByChat(id_chat);
+          socket.emit('chat_messages', mensajesExistentes);
+
+          console.log(`💬 Chat ${id_chat} inicializado para paciente ${id_paciente}. Mensajes cargados: ${mensajesExistentes.length}`);
 
         } catch (error) {
           console.error('❌ Error en init_chat:', error);
@@ -50,7 +55,7 @@ export const SocketController = {
         }
       });
 
-      // 🔹 Obtener mensajes del chat
+      // 🔹 Obtener mensajes del chat (por si se necesita manualmente)
       socket.on('get_messages', async () => {
         try {
           if (!socket.chatId) {
@@ -102,6 +107,10 @@ export const SocketController = {
           if (nuevoMensaje) {
             // Emitir a todos en la sala del chat
             io.to(`chat_${socket.chatId}`).emit('new_message', nuevoMensaje);
+            
+            // Confirmar envío al remitente
+            socket.emit('message_sent', { success: true, id: id_mensaje });
+            
             console.log(`💬 Mensaje ${id_mensaje} emitido en chat ${socket.chatId}`);
           }
 
