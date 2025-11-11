@@ -44,15 +44,56 @@ function decryptMessage(data) {
 }
 
 export const ChatModel = {
+  // REEMPLAZA la función getByChat con esta versión:
   async getByChat(id_chat) {
     const [rows] = await pool.query(
       "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_chat = ? ORDER BY fecha_envio ASC",
       [id_chat]
     );
+    
     return rows.map((msg) => ({
       ...msg,
       contenido: decryptMessage(msg.contenido),
+      // 🔥 CONVERTIR HORA A MÉXICO EN EL BACKEND
+      fecha_envio: this.convertToMexicoTime(msg.fecha_envio)
     }));
+  },
+
+  // AÑADE esta función al modelo:
+  convertToMexicoTime(date) {
+    if (!date) return '--:--';
+    
+    try {
+      // Si ya es un string formateado, devolverlo tal cual
+      if (typeof date === 'string' && (date.includes('a. m.') || date.includes('p. m.'))) {
+        return date;
+      }
+      
+      const fecha = new Date(date);
+      
+      // Validar que la fecha sea válida
+      if (isNaN(fecha.getTime())) {
+        console.log('❌ Fecha inválida en backend:', date);
+        return '--:--';
+      }
+      
+      // Convertir a hora de México
+      return fecha.toLocaleString('es-MX', {
+        timeZone: 'America/Mexico_City',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+    } catch (error) {
+      console.error('❌ Error convirtiendo hora en backend:', error);
+      // Fallback: devolver la hora sin conversión
+      return new Date(date).toLocaleTimeString('es-MX', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
   },
 
   async save({ id_chat, remitente, contenido }) {
@@ -139,7 +180,7 @@ export const ChatModel = {
       return false;
     }
   },
-  
+
   async getExistingChat(id_paciente, id_psicologo) {
     const [rows] = await pool.query(
       "SELECT id_chat FROM chat WHERE id_paciente = ? AND id_psicologo = ?",
