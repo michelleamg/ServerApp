@@ -50,15 +50,16 @@ function decryptMessageOrPlaceholder(data) {
 function toMexicoTime(date) {
   if (!date) return "--:--";
   try {
-    // 🔹 Asegurar que se interprete como UTC añadiendo la "Z"
-    const utcDate = new Date(date + "Z");
+    // 🔹 Si date ya es objeto Date, úsalo; si viene como string, añade 'Z' para forzar UTC
+    const utcDate =
+      date instanceof Date ? date : new Date(`${date}Z`);
 
     if (isNaN(utcDate.getTime())) {
       console.log("❌ Fecha inválida en backend:", date);
       return "--:--";
     }
 
-    // 🔹 Convertir a hora de Ciudad de México
+    // 🔹 Convertir correctamente de UTC → CDMX
     return utcDate.toLocaleString("es-MX", {
       timeZone: "America/Mexico_City",
       hour: "2-digit",
@@ -70,7 +71,6 @@ function toMexicoTime(date) {
     return "--:--";
   }
 }
-
 
 export const ChatModel = {
   async getByChat(id_chat) {
