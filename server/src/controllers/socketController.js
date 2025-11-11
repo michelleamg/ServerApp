@@ -2,132 +2,128 @@ import { ChatModel } from "../models/chatModel.js";
 
 export const SocketController = {
   initialize(io) {
-    io.on("connection", (socket) => {
-      console.log("🔌 Usuario conectado:", socket.id);
+    io.on('connection', (socket) => {
+      console.log('🔌 Usuario conectado:', socket.id);
 
-      // ────────────────────────────────────────────────
-      // 🔹 Inicializar chat (crear u obtener uno)
-      // ────────────────────────────────────────────────
-      socket.on("init_chat", async (data) => {
+      socket.on('init_chat', async (data) => {
         try {
           const { id_paciente } = data;
-
+          
           if (!id_paciente) {
-            socket.emit("chat_error", { error: "ID de paciente requerido" });
+            socket.emit('chat_error', { error: 'ID de paciente requerido' });
             return;
           }
 
-          // 1️⃣ Obtener psicólogo asignado
+          // 1. Obtener psicólogo asignado al paciente
           const psicologo = await ChatModel.getPsychologistByPatient(id_paciente);
+          
           if (!psicologo) {
-            socket.emit("chat_error", { error: "No tiene un psicólogo asignado" });
+            socket.emit('chat_error', { error: 'No tiene un psicólogo asignado' });
             return;
           }
 
-          // 2️⃣ Crear u obtener chat existente
+          // 2. Obtener o crear chat EN LA TABLA CHAT
           const id_chat = await ChatModel.createChat(id_paciente, psicologo.id_psicologo);
-          const chatExists = await ChatModel.verifyChatExists(id_chat);
-          if (!chatExists) {
-            socket.emit("chat_error", { error: "No se pudo crear/obtener el chat" });
-            return;
-          }
-
-          // 3️⃣ Unirse a la sala correspondiente
+          
+          // 3. Unirse al chat
           socket.join(`chat_${id_chat}`);
           socket.chatId = id_chat;
           socket.userId = id_paciente;
 
-          // 4️⃣ Emitir datos del chat
-          socket.emit("chat_initialized", {
+          // 4. Emitir datos del chat al cliente
+          socket.emit('chat_initialized', {
             id_chat,
             psicologo: {
               id: psicologo.id_psicologo,
               nombre: psicologo.nombre,
               apellidoPaterno: psicologo.apellidoPaterno,
               apellidoMaterno: psicologo.apellidoMaterno,
-              nombreCompleto: `${psicologo.nombre} ${psicologo.apellidoPaterno} ${psicologo.apellidoMaterno || ""}`.trim(),
-            },
+              nombreCompleto: `${psicologo.nombre} ${psicologo.apellidoPaterno} ${psicologo.apellidoMaterno || ''}`.trim()
+            }
           });
 
-          // 5️⃣ Cargar mensajes existentes
-          const mensajes = await ChatModel.getByChat(id_chat);
-          socket.emit("chat_messages", mensajes);
+          // 🔥 CRÍTICO: Cargar mensajes existentes automáticamente
+          console.log(`📨 Cargando mensajes existentes para chat ${id_chat}`);
+          const mensajesExistentes = await ChatModel.getByChat(id_chat);
+          socket.emit('chat_messages', mensajesExistentes);
 
-          console.log(
-            `💬 Chat ${id_chat} inicializado (paciente ${id_paciente}) con ${mensajes.length} mensajes`
-          );
+          console.log(`💬 Chat ${id_chat} inicializado para paciente ${id_paciente}. Mensajes cargados: ${mensajesExistentes.length}`);
+
         } catch (error) {
-          console.error("❌ Error en init_chat:", error);
-          socket.emit("chat_error", { error: "Error al inicializar el chat" });
+          console.error('❌ Error en init_chat:', error);
+          socket.emit('chat_error', { error: 'Error al inicializar chat' });
         }
       });
 
-      // ────────────────────────────────────────────────
-      // 🔹 Obtener mensajes del chat actual
-      // ────────────────────────────────────────────────
-      socket.on("get_messages", async () => {
+      // 🔹 Obtener mensajes del chat (por si se necesita manualmente)
+      socket.on('get_messages', async () => {
         try {
           if (!socket.chatId) {
-            socket.emit("messages_error", { error: "Chat no inicializado" });
+            socket.emit('messages_error', { error: 'Chat no inicializado' });
             return;
           }
 
           const mensajes = await ChatModel.getByChat(socket.chatId);
-          socket.emit("chat_messages", mensajes);
+          socket.emit('chat_messages', mensajes);
+
         } catch (error) {
-          console.error("❌ Error en get_messages:", error);
-          socket.emit("messages_error", { error: "Error al obtener mensajes" });
+          console.error('❌ Error en get_messages:', error);
+          socket.emit('messages_error', { error: 'Error al obtener mensajes' });
         }
       });
 
-      // ────────────────────────────────────────────────
-      // 🔹 Enviar nuevo mensaje
-      // ────────────────────────────────────────────────
-      socket.on("send_message", async (data) => {
+      socket.on('send_message', async (data) => {
         try {
-          const { remitente, contenido } = data;
-
-          if (!socket.chatId || !remitente || !contenido) {
-            socket.emit("message_error", { error: "Chat no inicializado o datos incompletos" });
+          const { contenido } = data;
+          
+          if (!socket.chatId || !contenido) {
+            socket.emit('message_error', { error: 'Chat no inicializado o mensaje vacío' });
             return;
           }
 
+          console.log(`📤 Intentando enviar mensaje al chat ${socket.chatId}:`, contenido);
+
+          // Verificar que el chat existe en la tabla chat
           const chatExists = await ChatModel.verifyChatExists(socket.chatId);
           if (!chatExists) {
-            socket.emit("message_error", { error: "El chat no existe" });
+            console.error(`❌ Chat ${socket.chatId} no existe en la BD`);
+            socket.emit('message_error', { error: 'El chat no existe' });
             return;
           }
 
-          // 1️⃣ Guardar mensaje cifrado
-          const nuevoMensaje = await ChatModel.save({
-            id_chat: socket.chatId,
-            remitente,
-            contenido,
+          // Guardar mensaje en la base de datos
+          const id_mensaje = await ChatModel.save({ 
+            id_chat: socket.chatId, 
+            remitente: 'paciente', 
+            contenido 
           });
 
-          // 2️⃣ Emitir en tiempo real
-          io.to(`chat_${socket.chatId}`).emit("new_message", nuevoMensaje);
+          console.log(`✅ Mensaje guardado en BD con ID: ${id_mensaje}`);
 
-          // 3️⃣ Confirmar al remitente
-          socket.emit("message_sent", { success: true, id: nuevoMensaje.id_mensaje });
+          // Obtener el mensaje recién guardado
+          const mensajes = await ChatModel.getByChat(socket.chatId);
+          const nuevoMensaje = mensajes.find(m => m.id_mensaje === id_mensaje);
 
-          console.log(
-            `📤 Mensaje ${nuevoMensaje.id_mensaje} emitido por ${remitente} en chat ${socket.chatId}`
-          );
+          if (nuevoMensaje) {
+            // Emitir a todos en la sala del chat
+            io.to(`chat_${socket.chatId}`).emit('new_message', nuevoMensaje);
+            
+            // Confirmar envío al remitente
+            socket.emit('message_sent', { success: true, id: id_mensaje });
+            
+            console.log(`💬 Mensaje ${id_mensaje} emitido en chat ${socket.chatId}`);
+          }
+
         } catch (error) {
-          console.error("❌ Error en send_message:", error);
-          socket.emit("message_error", {
-            error: "Error al enviar mensaje: " + (error.message || "desconocido"),
-          });
+          console.error('❌ Error en send_message:', error);
+          socket.emit('message_error', { error: 'Error al enviar mensaje: ' + error.message });
         }
       });
 
-      // ────────────────────────────────────────────────
-      // 🔹 Desconexión
-      // ────────────────────────────────────────────────
-      socket.on("disconnect", () => {
-        console.log("🔌 Usuario desconectado:", socket.id);
+      // Manejar desconexión
+      socket.on('disconnect', () => {
+        console.log('🔌 Usuario desconectado:', socket.id);
       });
     });
-  },
+  }
 };
