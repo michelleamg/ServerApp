@@ -127,7 +127,7 @@ export const ChatModel = {
   async verifyChatExists(id_chat) {
     try {
       const [rows] = await pool.query(
-        "SELECT id_chat FROM chat WHERE id_chat = ?",
+        "SELECT id_chat FROM mensaje WHERE id_chat = ?",
         [id_chat]
       );
       return rows.length > 0;
