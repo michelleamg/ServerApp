@@ -213,44 +213,44 @@ export const ForoController = {
   },
   // 🔹 Unirse a un foro
     async unirseForo(req, res) {
-    try {
-      const { id_foro } = req.params;
-      const { id_paciente } = req.body;
+      try {
+        const { id_foro } = req.params;
+        const { id_paciente } = req.body;
 
-      console.log("📥 Datos recibidos en /unirse:", { id_foro, id_paciente });
+        console.log("📥 Datos recibidos en /unirse:", { id_foro, id_paciente });
 
-      if (!id_foro || !id_paciente) {
-        return res.status(400).json({ message: "Faltan parámetros: id_foro o id_paciente" });
+        if (!id_foro || !id_paciente) {
+          return res.status(400).json({ message: "Faltan parámetros: id_foro o id_paciente" });
+        }
+
+        // Verificar si ya está unido
+        const [existing] = await pool.query(
+          `SELECT id_participante FROM foro_participante WHERE id_foro = ? AND id_paciente = ? LIMIT 1`,
+          [id_foro, id_paciente]
+        );
+
+        if (existing.length > 0) {
+          return res.status(200).json({ message: "Ya estás unido a este foro" });
+        }
+
+        // ✅ Insertar con tipo_usuario y rol obligatorios
+        await pool.query(
+          `INSERT INTO foro_participante (id_foro, id_paciente, tipo_usuario, rol, fecha_union)
+          VALUES (?, ?, 'paciente', 'miembro', NOW())`,
+          [id_foro, id_paciente]
+        );
+
+        console.log("✅ Nuevo participante agregado con éxito.");
+        return res.status(201).json({ message: "Te has unido al foro exitosamente" });
+      } catch (error) {
+        console.error("❌ Error al unirse al foro:", error);
+        res.status(500).json({
+          message: "Error al unirse al foro",
+          error: error.message,
+        });
       }
-
-      const [existing] = await pool.query(
-        `SELECT id_participante FROM foro_participante WHERE id_foro = ? AND id_paciente = ? LIMIT 1`,
-        [id_foro, id_paciente]
-      );
-
-      console.log("🔍 Participación existente:", existing);
-
-      if (existing.length > 0) {
-        return res.status(200).json({ message: "Ya estás unido a este foro" });
-      }
-
-      await pool.query(
-        `INSERT INTO foro_participante (id_foro, id_paciente, fecha_union)
-        VALUES (?, ?, NOW())`,
-        [id_foro, id_paciente]
-      );
-
-      console.log("✅ Nuevo participante agregado con éxito.");
-
-      return res.status(201).json({ message: "Te has unido al foro exitosamente" });
-    } catch (error) {
-      console.error("❌ Error al unirse al foro:", error);
-      res.status(500).json({
-        message: "Error al unirse al foro",
-        error: error.message,
-      });
     }
-  }
+
 
 
 
