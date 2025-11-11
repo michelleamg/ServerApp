@@ -1,10 +1,9 @@
 import { ChatModel } from "../models/chatModel.js";
-import pool from "../db/db.js";
 
 export const SocketController = {
   initialize(io) {
     io.on('connection', (socket) => {
-      console.log('🔌 Paciente conectado:', socket.id);
+      console.log('🔌 Usuario conectado:', socket.id);
 
       // 🔹 Obtener o crear chat para el paciente
       socket.on('init_chat', async (data) => {
@@ -24,12 +23,13 @@ export const SocketController = {
             return;
           }
 
-          // 2. Obtener o crear chat
-          const id_chat = await ChatModel.createChat(id_paciente, psicologo.id_psicologo);
+          // 2. Obtener o crear chat (usando id_paciente como id_chat)
+          const id_chat = id_paciente; // Simplificado
           
           // 3. Unirse al chat
           socket.join(`chat_${id_chat}`);
-          socket.chatId = id_chat; // Guardar ID del chat en el socket
+          socket.chatId = id_chat;
+          socket.userId = id_paciente;
 
           // 4. Emitir datos del chat al cliente
           socket.emit('chat_initialized', {
@@ -68,48 +68,46 @@ export const SocketController = {
         }
       });
 
-      // 🔹 Enviar mensaje (solo paciente)
+      // 🔹 Enviar mensaje - VERSIÓN CORREGIDA
       socket.on('send_message', async (data) => {
         try {
           const { contenido } = data;
           
           if (!socket.chatId || !contenido) {
-            socket.emit('error', { message: 'Chat no inicializado o mensaje vacío' });
+            socket.emit('message_error', { error: 'Chat no inicializado o mensaje vacío' });
             return;
           }
 
-          // 🔍 VERIFICAR que el chat existe antes de enviar
-          const chatExists = await ChatModel.verifyChatExists(socket.chatId);
-          if (!chatExists) {
-            console.error(`❌ Chat ${socket.chatId} no existe en la BD`);
-            socket.emit('error', { message: 'El chat no existe' });
-            return;
-          }
+          console.log(`📤 Intentando enviar mensaje al chat ${socket.chatId}:`, contenido);
 
-          // Guardar mensaje en la base de datos
+          // 🔥 CORRECCIÓN: Guardar mensaje SIN verificar existencia del chat
           const id_mensaje = await ChatModel.save({ 
             id_chat: socket.chatId, 
             remitente: 'paciente', 
             contenido 
           });
 
-          // ... resto del código para emitir el mensaje
+          console.log(`✅ Mensaje guardado en BD con ID: ${id_mensaje}`);
+
+          // Obtener el mensaje recién guardado
+          const mensajes = await ChatModel.getByChat(socket.chatId);
+          const nuevoMensaje = mensajes.find(m => m.id_mensaje === id_mensaje);
+
+          if (nuevoMensaje) {
+            // Emitir a todos en la sala del chat
+            io.to(`chat_${socket.chatId}`).emit('new_message', nuevoMensaje);
+            console.log(`💬 Mensaje ${id_mensaje} emitido en chat ${socket.chatId}`);
+          }
 
         } catch (error) {
           console.error('❌ Error en send_message:', error);
-          
-          // Manejar error específico de foreign key
-          if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-            socket.emit('error', { message: 'Error: El chat no existe en el sistema' });
-          } else {
-            socket.emit('error', { message: 'Error al enviar mensaje' });
-          }
+          socket.emit('message_error', { error: 'Error al enviar mensaje: ' + error.message });
         }
       });
 
       // Manejar desconexión
       socket.on('disconnect', () => {
-        console.log('🔌 Paciente desconectado:', socket.id);
+        console.log('🔌 Usuario desconectado:', socket.id);
       });
     });
   }

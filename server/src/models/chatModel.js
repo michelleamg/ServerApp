@@ -124,7 +124,7 @@ export const ChatModel = {
     return id_chat;
   },
 
-  async verifyChatExists(id_chat) {
+  /*async verifyChatExists(id_chat) {
     try {
       const [rows] = await pool.query(
         "SELECT id_chat FROM mensaje WHERE id_chat = ?",
@@ -135,9 +135,8 @@ export const ChatModel = {
       console.error('❌ Error verificando chat:', error);
       return false;
     }
-  },
+  },*/
 
-  // Función auxiliar para decrypt (hacerla disponible externamente)
   decryptMessage(data) {
     try {
       const [ivHex, tagHex, encHex] = data.split(":");
