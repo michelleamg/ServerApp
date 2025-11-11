@@ -3,9 +3,11 @@ import pool from "../db/db.js";
 
 export const ForoController = {
   // 🔹 Obtener todos los foros visibles para pacientes
+  // controllers/foroController.js
   async getForosParaPacientes(req, res) {
     try {
       const { id_paciente } = req.query;
+
       if (!id_paciente) {
         return res.status(400).json({ message: "Falta el parámetro id_paciente" });
       }
@@ -23,7 +25,7 @@ export const ForoController = {
           'Psicólogo' AS creador,
           IF(fp.id_paciente IS NOT NULL, 1, 0) AS unido
         FROM foro f
-        -- 🔹 Subconsulta para contar temas por foro
+        -- 🔹 Subconsulta para contar temas
         LEFT JOIN (
           SELECT id_foro, COUNT(id_tema) AS total_temas
           FROM tema
@@ -36,25 +38,21 @@ export const ForoController = {
           LEFT JOIN mensaje_foro mf ON t.id_tema = mf.id_tema
           GROUP BY t.id_foro
         ) AS msgs ON msgs.id_foro = f.id_foro
-        -- 🔹 Subconsulta para participantes
+        -- 🔹 Subconsulta para contar participantes
         LEFT JOIN (
           SELECT id_foro, COUNT(id_participante) AS total_participantes
           FROM foro_participante
           GROUP BY id_foro
         ) AS parts ON parts.id_foro = f.id_foro
+        -- 🔹 Verificar si el paciente ya se unió
         LEFT JOIN foro_participante fp
           ON fp.id_foro = f.id_foro AND fp.id_paciente = ?
-        WHERE f.publico = 1
-          OR f.id_psicologo_creador = (
-                SELECT id_psicologo FROM paciente WHERE id_paciente = ?
-            )
         ORDER BY f.id_foro DESC;
         `,
-        [id_paciente, id_paciente]
+        [id_paciente]
       );
 
-
-      return res.json({ success: true, foros: rows });
+      return res.json({ success: true, data: rows });
     } catch (error) {
       console.error("❌ Error al obtener foros:", error);
       res.status(500).json({
@@ -64,6 +62,7 @@ export const ForoController = {
       });
     }
   },
+
 
   // 🔹 Obtener todos los foros (modo general o admin)
   async getForos(req, res) {
