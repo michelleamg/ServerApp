@@ -17,7 +17,7 @@ import diarioEmocionesRoutes from "./routes/diarioEmociones.routes.js";
 import ActividadesRoutes from "./routes/actividades.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import foroRoutes from "./routes/foro.routes.js";
-import { SocketController } from "./controllers/socketController.js";
+import { SocketController } from "./controllers/socketController.js";//si marca error no lo aregles asi jala es el node.js
 
 const app = express();
 
