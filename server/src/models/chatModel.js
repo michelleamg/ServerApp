@@ -44,7 +44,7 @@ function decryptMessage(data) {
 }
 
 export const ChatModel = {
-  // REEMPLAZA la función getByChat con esta versión:
+
   async getByChat(id_chat) {
     const [rows] = await pool.query(
       "SELECT id_mensaje, remitente, contenido, fecha_envio, leido FROM mensaje WHERE id_chat = ? ORDER BY fecha_envio ASC",
@@ -54,11 +54,11 @@ export const ChatModel = {
     return rows.map((msg) => ({
       ...msg,
       contenido: decryptMessage(msg.contenido),
-      // 🔥 CONVERTIR HORA A MÉXICO EN EL BACKEND
-      fecha_envio: this.convertToMexicoTime(msg.fecha_envio)
+      // ⚠️ ENVIAR EL TIMESTAMP ORIGINAL, NO CONVERTIDO
+      // fecha_envio: msg.fecha_envio // ← Así el frontend puede crear Date objects
     }));
   },
-  
+
   convertToMexicoTime(date) {
     if (!date) return '--:--';
     
