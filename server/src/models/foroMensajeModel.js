@@ -13,7 +13,7 @@ export const ForoMensajeModel = {
         mf.id_paciente,
         mf.id_psicologo,
         mf.contenido,
-        mf.fecha_creacion,
+        mf.fecha_envio,
         COALESCE(p.nombre, ps.nombre) AS autor_nombre
       FROM mensaje_foro mf
       LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
@@ -50,7 +50,7 @@ export const ForoMensajeModel = {
       id_paciente,
       id_psicologo,
       contenido, // descifrado (para enviar al front)
-      fecha_creacion: new Date(),
+      fecha_envio: new Date(),
     };
   },
 };
