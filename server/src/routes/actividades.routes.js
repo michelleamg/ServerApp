@@ -1,15 +1,9 @@
 import express from "express";
-import {
-  getActividadesPaciente,
-  postActividadPaciente,
-} from "../controllers/actividadesController.js";
+import { getActividadesPorModulo } from "../controllers/actividadesController.js";
 
 const router = express.Router();
 
-// 📥 Registrar / actualizar progreso
-router.post("/actividad-paciente", postActividadPaciente);
-
-// 📤 Obtener actividades con su estado
-router.get("/actividad-paciente/:id_paciente", getActividadesPaciente);
+// 📤 Obtener actividades de un módulo (Negación, Ira, etc.)
+router.get("/:id_modulo/actividades", getActividadesPorModulo);
 
 export default router;

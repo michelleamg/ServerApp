@@ -1,32 +1,28 @@
-import {
-  obtenerActividadesPorPaciente,
-  registrarOActualizarActividadPaciente,
-} from "../models/actividadesModel.js";
+import { Actividad } from "../models/actividadesModel.js";
 
-export const getActividadesPaciente = async (req, res) => {
-  const { id_paciente } = req.params;
-
+export const getActividadesPorModulo = async (req, res) => {
   try {
-    const actividades = await obtenerActividadesPorPaciente(id_paciente);
-    res.status(200).json(actividades);
-  } catch (error) {
-    console.error("❌ Error al obtener actividades del paciente:", error);
-    res.status(500).json({ message: "Error al obtener actividades" });
-  }
-};
+    const { id_modulo } = req.params;
 
-
-export const postActividadPaciente = async (req, res) => {
-  try {
-    const data = req.body;
-    if (!data.id_paciente || !data.id_actividad) {
-      return res.status(400).json({ message: "Faltan parámetros obligatorios" });
+    if (!id_modulo) {
+      return res.status(400).json({
+        success: false,
+        error: "El id_modulo es requerido"
+      });
     }
 
-    const result = await registrarOActualizarActividadPaciente(data);
-    res.status(200).json(result);
+    const actividades = await Actividad.getByModulo(id_modulo);
+
+    return res.status(200).json({
+      success: true,
+      actividades
+    });
+
   } catch (error) {
-    console.error("❌ Error al registrar actividad paciente:", error);
-    res.status(500).json({ message: "Error al registrar evidencia" });
+    console.error("Error getActividadesPorModulo:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error al obtener actividades del módulo"
+    });
   }
 };
