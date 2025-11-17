@@ -35,11 +35,11 @@ export const AgendaController = {
         const semanaInicio = primerLunes.clone().add(i, "weeks");
         const semanaFin = semanaInicio.clone().add(6, "days");
 
-        // 3️⃣ Traer SOLO las citas del paciente actual (no de todos)
+        // 3️⃣ Traer SOLO las citas del paciente actual
         const [citas] = await pool.query(
           `SELECT 
               c.id_cita,
-              c.fecha,
+              DATE_FORMAT(c.fecha, '%Y-%m-%d') as fecha,
               c.hora_inicio,
               c.hora_fin,
               c.modalidad,
@@ -52,13 +52,11 @@ export const AgendaController = {
             ORDER BY c.fecha, c.hora_inicio`,
           [
             id_psicologo,
-            id_paciente, // 👈 nuevo filtro
+            id_paciente,
             semanaInicio.format("YYYY-MM-DD"),
             semanaFin.format("YYYY-MM-DD"),
           ]
         );
-
-
 
         // 4️⃣ Agregar estado visual según la fecha actual
         const ahora = moment();
@@ -75,8 +73,8 @@ export const AgendaController = {
 
         // 5️⃣ Agregar semana con sus citas
         semanas.push({
-          semana_inicio: semanaInicio.toDate(),
-          semana_fin: semanaFin.toDate(),
+          semana_inicio: semanaInicio.format("YYYY-MM-DD"), // 🆕 String en lugar de Date
+          semana_fin: semanaFin.format("YYYY-MM-DD"),       // 🆕 String en lugar de Date
           citas: citasConEstado,
         });
       }
