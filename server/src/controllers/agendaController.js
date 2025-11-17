@@ -151,25 +151,42 @@ export const AgendaController = {
 
       const id_psicologo = pacienteRows[0].id_psicologo;
 
-      // 2️⃣ Buscar o crear agenda activa del psicólogo
+      // 🆕 2️⃣ VALIDAR QUE NO HAYA CONFLICTO DE HORARIO
+      const [citasConflicto] = await pool.query(
+        `SELECT COUNT(*) as conflictos
+        FROM cita c
+        INNER JOIN agenda a ON c.id_agenda = a.id_agenda
+        WHERE a.id_psicologo = ?
+          AND c.fecha = ?
+          AND c.estado IN ('confirmada', 'pendiente')
+          AND c.hora_inicio = ?`,
+        [id_psicologo, fecha, hora_inicio]
+      );
+
+      if (citasConflicto[0].conflictos > 0) {
+        return res.status(409).json({ 
+          message: "El horario seleccionado ya no está disponible. Por favor elige otro." 
+        });
+      }
+
+      // 3️⃣ Buscar o crear agenda activa del psicólogo
       const [agendaRows] = await pool.query(
         `SELECT id_agenda 
-         FROM agenda 
-         WHERE id_psicologo = ?
-           AND ? BETWEEN semana_inicio AND semana_fin
-         LIMIT 1`,
+        FROM agenda 
+        WHERE id_psicologo = ?
+          AND ? BETWEEN semana_inicio AND semana_fin
+        LIMIT 1`,
         [id_psicologo, fecha]
       );
 
       let id_agenda;
       if (agendaRows.length === 0) {
-        // Crear una agenda si no existe para esa semana
         const semanaInicio = moment(fecha).startOf("isoWeek").format("YYYY-MM-DD");
         const semanaFin = moment(fecha).endOf("isoWeek").format("YYYY-MM-DD");
 
         const [nuevaAgenda] = await pool.query(
           `INSERT INTO agenda (id_psicologo, semana_inicio, semana_fin)
-           VALUES (?, ?, ?)`,
+          VALUES (?, ?, ?)`,
           [id_psicologo, semanaInicio, semanaFin]
         );
         id_agenda = nuevaAgenda.insertId;
@@ -177,12 +194,21 @@ export const AgendaController = {
         id_agenda = agendaRows[0].id_agenda;
       }
 
-      // 3️⃣ Insertar nueva cita como pendiente
+      // 4️⃣ Insertar nueva cita como pendiente
       const [result] = await pool.query(
         `INSERT INTO cita (id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad, estado)
-         VALUES (?, ?, ?, ?, ?, ?, 'pendiente')`,
+        VALUES (?, ?, ?, ?, ?, ?, 'pendiente')`,
         [id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad || "En línea"]
       );
+
+      // 🆕 5️⃣ Emitir evento Socket.IO
+      io.emit(`nueva-solicitud-${id_psicologo}`, {
+        id_cita: result.insertId,
+        id_paciente,
+        fecha,
+        hora_inicio,
+        modalidad
+      });
 
       res.status(201).json({
         message: "Cita solicitada con éxito. Espera confirmación del psicólogo.",
@@ -194,4 +220,71 @@ export const AgendaController = {
       res.status(500).json({ message: "Error al solicitar cita", error });
     }
   },
+  /* ========================================================
+   🕐 5️⃣ Obtener horarios disponibles para una fecha específica
+   ======================================================== */
+async getHorariosDisponibles(req, res) {
+  try {
+    const { id_paciente, fecha } = req.query;
+
+    if (!id_paciente || !fecha) {
+      return res.status(400).json({ 
+        message: "Faltan parámetros: id_paciente y fecha" 
+      });
+    }
+
+    // 1️⃣ Buscar psicólogo del paciente
+    const [pacienteRows] = await pool.query(
+      "SELECT id_psicologo FROM paciente WHERE id_paciente = ? LIMIT 1",
+      [id_paciente]
+    );
+
+    if (pacienteRows.length === 0) {
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+
+    const id_psicologo = pacienteRows[0].id_psicologo;
+
+    // 2️⃣ Horarios por defecto del psicólogo (7am - 7pm, cada hora)
+    const horarios = [];
+    for (let h = 7; h <= 18; h++) {
+      horarios.push(`${h.toString().padStart(2, "0")}:00`);
+    }
+
+    // 3️⃣ Buscar citas ocupadas para esa fecha
+    const [citasOcupadas] = await pool.query(
+      `SELECT c.hora_inicio, c.hora_fin, c.estado
+       FROM cita c
+       INNER JOIN agenda a ON c.id_agenda = a.id_agenda
+       WHERE a.id_psicologo = ?
+         AND c.fecha = ?
+         AND c.estado IN ('confirmada', 'pendiente')
+       ORDER BY c.hora_inicio`,
+      [id_psicologo, fecha]
+    );
+
+    // 4️⃣ Marcar horarios ocupados
+    const horariosConEstado = horarios.map(hora => {
+      const ocupado = citasOcupadas.some(cita => 
+        cita.hora_inicio.substring(0, 5) === hora
+      );
+      return {
+        hora,
+        disponible: !ocupado
+      };
+    });
+
+    res.status(200).json({
+      fecha,
+      horarios: horariosConEstado,
+      id_psicologo
+    });
+  } catch (error) {
+    console.error("❌ Error al obtener horarios disponibles:", error);
+    res.status(500).json({ 
+      message: "Error al obtener horarios disponibles", 
+      error: error.message 
+    });
+  }
+},
 };

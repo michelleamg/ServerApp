@@ -28,4 +28,7 @@ router.get("/citas/:id_agenda", AgendaController.getCitasSemana);
 // 👉 GET /api/agenda/:id_psicologo
 router.get("/:id_psicologo", AgendaController.getSemanas);
 
+// Obtener horarios disponibles
+// 👉 GET /api/agenda/horarios-disponibles?id_paciente=X&fecha=YYYY-MM-DD
+router.get("/horarios-disponibles", AgendaController.getHorariosDisponibles);
 export default router;
