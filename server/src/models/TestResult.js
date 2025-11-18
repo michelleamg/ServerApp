@@ -1,34 +1,26 @@
 import pool from '../db/db.js';
 
 export const Test = {
-  createApplication: async (id_test, id_paciente, tipo = '1') => {
-  // 1️⃣ Validar si ya existe un test inicial completado
-  const [existing] = await pool.execute(
-    `SELECT id_aplicacion FROM aplicacion_test 
-     WHERE id_paciente = ? AND tipo = 1 AND estado = 'completado'`,
-    [id_paciente]
-  );
+  createApplication: async (id_test, id_paciente, tipo = 1) => {
 
-  if (existing.length > 0 && tipo === '1') {
-    throw new Error("El paciente ya completó el test inicial.");
-  }
+    const [existing] = await pool.execute(
+      `SELECT id_aplicacion FROM aplicacion_test 
+      WHERE id_paciente = ? AND tipo = 1 AND estado = 'completado'`,
+      [id_paciente]
+    );
 
-  // 2️⃣ Obtener psicólogo
-  const [pacienteRows] = await pool.execute(
-    'SELECT id_psicologo FROM paciente WHERE id_paciente = ?',
-    [id_paciente]
-  );
-  const id_psicologo = pacienteRows[0]?.id_psicologo || 1;
+    if (existing.length > 0 && tipo === 1) {
+      throw new Error("El paciente ya completó el test inicial.");
+    }
 
-  // 3️⃣ Insertar nuevo registro
-  const [result] = await pool.execute(
-    `INSERT INTO aplicacion_test (id_test, id_paciente, id_psicologo, fecha, tipo) 
-     VALUES (?, ?, ?, NOW(), ?)`,
-    [id_test, id_paciente, id_psicologo, tipo]
-  );
-  return result.insertId;
-},
+    const [result] = await pool.execute(
+      `INSERT INTO aplicacion_test (id_test, id_paciente, id_psicologo, fecha, tipo) 
+      VALUES (?, ?, ?, NOW(), ?)`,
+      [id_test, id_paciente, id_psicologo, tipo]
+    );
 
+    return result.insertId;
+  },
 
   // Guardar respuesta individual
   saveAnswer: async (id_aplicacion, questionId, pregunta, respuesta) => {
