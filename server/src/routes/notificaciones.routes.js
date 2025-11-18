@@ -1,5 +1,9 @@
 import { Router } from "express";
 import db from "../db/db.js";
+import { 
+  notificarCitaAceptada, 
+  notificarCitaRechazada 
+} from "../utils/notificaciones.service.js";
 
 const router = Router();
 
