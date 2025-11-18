@@ -16,24 +16,25 @@ export async function enviarNotificacionExpo(token, title, body, data = {}) {
       body,
       sound: "default",
       priority: "high",
-      data,   // ejemplo { screen: "AgendaScreen" }
+      data,
     };
 
-    const response = await axios.post(
-        "https://exp.host/--/api/v2/push/send",
-        mensaje,
-        { headers: { "Content-Type": "application/json" } }
-    );
-
-    console.log("📤 Notificación enviada:", response.data);
-
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(mensaje)
+    });
 
     const resultado = await response.json();
     console.log("📤 Notificación enviada:", resultado);
+
   } catch (error) {
     console.error("❌ Error enviando notificación:", error);
   }
 }
+
 
 /**
  * Obtiene TODOS los tokens registrados por un paciente
