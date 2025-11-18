@@ -33,11 +33,11 @@ export const Test = {
 
 
   // Guardar respuesta individual
-  saveAnswer: async (id_aplicacion, questionId, pregunta, respuesta) => {
+  saveAnswer: async (id_aplicacion, questionId, respuesta) => {
     await pool.execute(
-      `INSERT INTO respuesta_test (id_aplicacion,id_pregunta, pregunta, respuesta) 
-       VALUES (?, ?, ?, ?)`,
-      [id_aplicacion,questionId , pregunta, respuesta]
+      `INSERT INTO respuesta_test (id_aplicacion, id_pregunta, respuesta)
+      VALUES (?, ?, ?)`,
+      [id_aplicacion, questionId, respuesta]
     );
   },
 

@@ -53,11 +53,15 @@ export const testController = {
       console.log('✅ Aplicación creada ID:', id_aplicacion);
 
       // 2. Guardar respuestas
+      // 2. Guardar respuestas
       for (const answer of answers) {
-        const preguntaTexto = Test.getQuestionText(answer.questionId);
-        await Test.saveAnswer(id_aplicacion, answer.questionId, preguntaTexto, answer.value.toString());
+        await Test.saveAnswer(
+          id_aplicacion,
+          answer.questionId,
+          answer.value.toString()
+        );
       }
-      console.log('✅ Respuestas guardadas:', answers.length);
+      console.log('✅ Respuestas guardadas para aplicación ID:', id_aplicacion);
 
       // 3. Calcular puntaje total y guardar resultado
       const puntajeTotal = Math.round((initialScore + currentScore) / 2);
