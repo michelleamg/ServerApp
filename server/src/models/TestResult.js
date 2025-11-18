@@ -5,7 +5,7 @@ export const Test = {
   // 1️⃣ Validar si ya existe un test inicial completado
   const [existing] = await pool.execute(
     `SELECT id_aplicacion FROM aplicacion_test 
-     WHERE id_paciente = ? AND tipo = 'inicial' AND estado = 'completado'`,
+     WHERE id_paciente = ? AND tipo = 1 AND estado = 'completado'`,
     [id_paciente]
   );
 
