@@ -2,12 +2,12 @@ import { Router } from "express";
 import db from "../db/db.js";
 import { 
   notificarCitaAceptada, 
-  notificarCitaRechazada,
-  obtenerTokensPaciente 
+  notificarCitaRechazada
 } from "../utils/notificaciones.service.js";
 
 const router = Router();
 
+// Registrar token
 router.post("/register-token", async (req, res) => {
   const { id_paciente, push_token } = req.body;
 
@@ -28,7 +28,7 @@ router.post("/register-token", async (req, res) => {
   }
 });
 
-// 📌 NOTIFICACIÓN: CITA ACEPTADA
+// Enviar notificación: cita aceptada
 router.post("/cita-aceptada", async (req, res) => {
   try {
     const { id_paciente } = req.body;
@@ -47,7 +47,7 @@ router.post("/cita-aceptada", async (req, res) => {
   }
 });
 
-// 📌 NOTIFICACIÓN: CITA RECHAZADA
+// Enviar notificación: cita rechazada
 router.post("/cita-rechazada", async (req, res) => {
   try {
     const { id_paciente } = req.body;
