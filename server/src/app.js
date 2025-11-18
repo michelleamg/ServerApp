@@ -50,6 +50,7 @@ io.on("connection", (socket) => {
 
 // 🗂️ Servir archivos estáticos (por ejemplo, PDFs o docs públicos)
 app.use("/docs", express.static(path.join(__dirname, "../public/docs")));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // 🧩 Middlewares globales
 app.use(morgan("dev"));
