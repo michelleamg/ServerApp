@@ -14,6 +14,9 @@ router.get("/results/:id_paciente", testController.getLastResult);
 
 router.get("/questions/:id_test", testController.getQuestionsByTest);
 
+router.get("/assigned/:id_paciente", checkAssignedFinalTest);
+
+
 
 
 export default router;

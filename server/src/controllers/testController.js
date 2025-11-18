@@ -167,14 +167,36 @@ export const testController = {
     },
   
     getQuestionsByTest: async (req, res) => {
-      try {
-        const { id_test } = req.params;
-        const questions = await Test.getQuestionsByTest(id_test);
-        res.status(200).json(questions);
-      } catch (error) {
-        res.status(500).json({ message: "Error obteniendo preguntas" });
-      }
+  try {
+    const { id_test } = req.params;
+    const questions = await Test.getQuestionsByTest(Number(id_test));
+
+    res.json({
+      success: true,
+      questions
+    });
+  } catch (error) {
+    console.error("❌ Error getQuestionsByTest:", error);
+    res.status(500).json({ success: false });
+  }},
+  checkAssignedFinalTest :async (req, res) => {
+  try {
+    const { id_paciente } = req.params;
+
+    const assigned = await Test.checkAssignedFinalTest(Number(id_paciente));
+
+    res.json({
+      success: true,
+      assigned
+    });
+  } catch (error) {
+    console.error("❌ Error checkAssignedFinalTest:", error);
+    res.status(500).json({ success: false });
+  }
 },
+
+
+
 
 
 };
