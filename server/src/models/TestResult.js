@@ -166,4 +166,18 @@ export const Test = {
   );
   return rows;
 },
+
+checkAssignedFinalTest: async (id_paciente) => {
+  const [rows] = await pool.execute(
+    `SELECT * FROM aplicacion_test 
+     WHERE id_paciente = ? AND id_test = 2`,
+    [id_paciente]
+  );
+
+  return rows.length > 0;
+},
+
+
+
+
 };

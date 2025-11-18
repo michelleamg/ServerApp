@@ -179,6 +179,7 @@ export const testController = {
     console.error("❌ Error getQuestionsByTest:", error);
     res.status(500).json({ success: false });
   }},
+
   checkAssignedFinalTest :async (req, res) => {
   try {
     const { id_paciente } = req.params;
@@ -194,9 +195,59 @@ export const testController = {
     res.status(500).json({ success: false });
   }
 },
+  
+    // 🟢 Guardar resultados del TEST FINAL (id_test = 2)
+  saveFinalTest: async (req, res) => {
+    const connection = await pool.getConnection();
 
+    try {
+      await connection.beginTransaction();
 
+      const { id_paciente, answers } = req.body;
 
+      if (!id_paciente || !answers) {
+        return res.status(400).json({
+          success: false,
+          error: "id_paciente y answers son requeridos"
+        });
+      }
 
+      console.log("💾 Guardando TEST FINAL para:", id_paciente);
 
+      // 1️⃣ Crear aplicación de test final
+      const id_aplicacion = await Test.createApplication(2, id_paciente, 2);
+      console.log("🟢 Aplicación final creada:", id_aplicacion);
+
+      // 2️⃣ Guardar respuestas
+      for (const ans of answers) {
+        await Test.saveAnswer(id_aplicacion, ans.id_pregunta, ans.value.toString());
+      }
+
+      // 3️⃣ Guardar resultado simple
+      await Test.saveResult(id_aplicacion, 0, "final_test_completed");
+
+      // 4️⃣ Marcar como completado
+      await pool.execute(
+        "UPDATE aplicacion_test SET estado = 'completado' WHERE id_aplicacion = ?",
+        [id_aplicacion]
+      );
+
+      await connection.commit();
+
+      res.json({
+        success: true,
+        message: "Test final guardado",
+        id_aplicacion
+      });
+
+    } catch (error) {
+      await connection.rollback();
+      console.error("❌ Error en saveFinalTest:", error);
+
+      res.status(500).json({
+        success: false,
+        error: "Error guardando test final"
+      });
+    }
+  },
 };
