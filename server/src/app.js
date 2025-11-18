@@ -18,6 +18,7 @@ import ActividadesRoutes from "./routes/actividades.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import foroRoutes from "./routes/foro.routes.js";
 import recursosRoutes from "./routes/recursos.routes.js";
+import evidenciasRoutes from "./routes/evidencias.routes.js";
 
 import { SocketController } from "./controllers/socketController.js";
 
@@ -70,6 +71,7 @@ app.use("/api/modulos", ActividadesRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/foros", foroRoutes);
 app.use("/api", recursosRoutes);
+app.use("/api/evidencias", evidenciasRoutes);
 
 // 🔍 Ruta de prueba rápida
 app.get("/api/ping", (req, res) => {
