@@ -158,4 +158,14 @@ export const Test = {
     return rows[0] || null;
   },
 
+  getQuestionsByTest: async (id_test) => {
+  const [rows] = await pool.execute(
+    `SELECT id_pregunta, numero_pregunta, texto_pregunta, tipo_respuesta
+     FROM pregunta_test WHERE id_test = ? ORDER BY numero_pregunta ASC`,
+    [id_test]
+  );
+  return rows;
+},
+
+
 };

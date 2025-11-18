@@ -165,7 +165,16 @@ export const testController = {
         });
       }
     },
+  
+    getQuestionsByTest: async (req, res) => {
+      try {
+        const { id_test } = req.params;
+        const questions = await Test.getQuestionsByTest(id_test);
+        res.status(200).json(questions);
+      } catch (error) {
+        res.status(500).json({ message: "Error obteniendo preguntas" });
+      }
+},
 
 
 };
-
