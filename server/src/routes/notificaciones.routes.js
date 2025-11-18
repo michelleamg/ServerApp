@@ -2,7 +2,8 @@ import { Router } from "express";
 import db from "../db/db.js";
 import { 
   notificarCitaAceptada, 
-  notificarCitaRechazada 
+  notificarCitaRechazada,
+  obtenerTokensPaciente 
 } from "../utils/notificaciones.service.js";
 
 const router = Router();
