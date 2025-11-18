@@ -1,4 +1,3 @@
-import axios from "axios";
 import db from "../db/db.js";
 
 /**
