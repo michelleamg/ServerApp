@@ -108,33 +108,32 @@ export const Test = {
     ];
   },
 
-  async checkIfCompleted(id_paciente) {
-    try {
-      const [rows] = await pool.execute(
-        `
-        SELECT estado
-        FROM aplicacion_test
-        WHERE id_paciente = ? AND tipo = '1'
-        ORDER BY fecha DESC
-        LIMIT 1
-        `,
-        [id_paciente]
-      );
+      async checkIfCompleted(id_paciente) {
+      try {
+        const [rows] = await pool.execute(
+          `
+          SELECT estado
+          FROM aplicacion_test
+          WHERE id_paciente = ? 
+          AND id_test = 1
+          ORDER BY fecha DESC
+          LIMIT 1
+          `,
+          [id_paciente]
+        );
 
-      if (rows.length === 0) {
-        console.log("ℹ️ No hay tests iniciales previos para este paciente.");
+        if (rows.length === 0) {
+          return false;
+        }
+
+        const estado = rows[0].estado?.toLowerCase() || "";
+        return estado === "completado";
+
+      } catch (error) {
+        console.error("❌ Error en checkIfCompleted:", error);
         return false;
       }
-
-      const estado = rows[0].estado?.toLowerCase() || "";
-      console.log(`🧾 Último estado del test inicial: ${estado}`);
-
-      return estado === "completado";
-    } catch (error) {
-      console.error("❌ Error en checkIfCompleted:", error);
-      return false;
-    }
-  },
+    },
 
     // ✅ Obtener el último resultado del test de un paciente
   getLastResult: async (id_paciente) => {
@@ -176,8 +175,4 @@ checkAssignedFinalTest: async (id_paciente) => {
 
   return rows.length > 0;
 },
-
-
-
-
 };
