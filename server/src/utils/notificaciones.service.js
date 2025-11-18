@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+import axios from "axios";
 import db from "../db/db.js";
 
 /**
@@ -19,11 +19,14 @@ export async function enviarNotificacionExpo(token, title, body, data = {}) {
       data,   // ejemplo { screen: "AgendaScreen" }
     };
 
-    const response = await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(mensaje),
-    });
+    const response = await axios.post(
+        "https://exp.host/--/api/v2/push/send",
+        mensaje,
+        { headers: { "Content-Type": "application/json" } }
+    );
+
+    console.log("📤 Notificación enviada:", response.data);
+
 
     const resultado = await response.json();
     console.log("📤 Notificación enviada:", resultado);
