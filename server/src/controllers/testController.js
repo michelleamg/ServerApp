@@ -49,7 +49,7 @@ export const testController = {
       
 
       // 1. Crear aplicación de test
-      const id_aplicacion = await Test.createApplication(1, userId, 'inicial');
+      const id_aplicacion = await Test.createApplication(1, userId,1);
       console.log('✅ Aplicación creada ID:', id_aplicacion);
 
       // 2. Guardar respuestas
