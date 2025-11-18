@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import db from "../config/db.js";
+import db from "../db/db.js";
 
 /**
  * Envía una notificación push usando Expo Push Service
