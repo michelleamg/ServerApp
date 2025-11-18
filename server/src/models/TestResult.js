@@ -1,7 +1,7 @@
 import pool from '../db/db.js';
 
 export const Test = {
-  createApplication: async (id_test, id_paciente, tipo = 'inicial') => {
+  createApplication: async (id_test, id_paciente, tipo = '1') => {
   // 1️⃣ Validar si ya existe un test inicial completado
   const [existing] = await pool.execute(
     `SELECT id_aplicacion FROM aplicacion_test 
@@ -9,7 +9,7 @@ export const Test = {
     [id_paciente]
   );
 
-  if (existing.length > 0 && tipo === 'inicial') {
+  if (existing.length > 0 && tipo === '1') {
     throw new Error("El paciente ya completó el test inicial.");
   }
 
@@ -87,7 +87,7 @@ export const Test = {
         `
         SELECT estado
         FROM aplicacion_test
-        WHERE id_paciente = ? AND tipo = 'inicial'
+        WHERE id_paciente = ? AND tipo = '1'
         ORDER BY fecha_creacion DESC
         LIMIT 1
         `,
