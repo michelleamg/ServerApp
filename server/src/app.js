@@ -70,7 +70,7 @@ app.use("/api/modulos", ActividadesRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/foros", foroRoutes);
 app.use("/api", recursosRoutes);
-app.use("/api/evidencias", evidenciasRoutes);
+app.use("/api", evidenciasRoutes);
 
 // 🔍 Ruta de prueba rápida
 app.get("/api/ping", (req, res) => {
