@@ -75,7 +75,7 @@ app.use("/api/foros", foroRoutes);
 app.use("/api", recursosRoutes);
 app.use("/api", evidenciasRoutes);
 app.use("/api/notificaciones", notificacionesRoutes);
-app.use("/api/notificaciones", notificacionesTestRoutes);
+//app.use("/api/notificaciones", notificacionesTestRoutes);
 // 🔍 Ruta de prueba rápida
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong", timestamp: new Date() });
