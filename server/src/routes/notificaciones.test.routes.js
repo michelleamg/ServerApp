@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { enviarNotificacionExpo } from "../utils/notificaciones.service.js";
-import db from "../db/db.js";
 
 const router = Router();
 
