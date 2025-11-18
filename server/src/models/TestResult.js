@@ -108,14 +108,18 @@ export const Test = {
     ];
   },
 
-      async checkIfCompleted(id_paciente) {
+      // Método mejorado para TestResult.js
+// Reemplaza el método checkIfCompleted existente con este:
+
+    async checkIfCompleted(id_paciente) {
       try {
         const [rows] = await pool.execute(
           `
-          SELECT estado
+          SELECT estado, tipo
           FROM aplicacion_test
           WHERE id_paciente = ? 
           AND id_test = 1
+          AND tipo = 1
           ORDER BY fecha DESC
           LIMIT 1
           `,
@@ -134,7 +138,6 @@ export const Test = {
         return false;
       }
     },
-
     // ✅ Obtener el último resultado del test de un paciente
   getLastResult: async (id_paciente) => {
     const [rows] = await pool.execute(
