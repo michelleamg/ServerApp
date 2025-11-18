@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import { createServer } from "http"; // ← Usar HTTP temporalmente
 import { Server } from "socket.io";
 import notificacionesRoutes from "./routes/notificaciones.routes.js";
+import notificacionesTestRoutes from "./routes/notificaciones.test.routes.js";
 
 // Importar rutas
 import indexRoutes from "./routes/index.routes.js";
@@ -74,7 +75,7 @@ app.use("/api/foros", foroRoutes);
 app.use("/api", recursosRoutes);
 app.use("/api", evidenciasRoutes);
 app.use("/api/notificaciones", notificacionesRoutes);
-
+app.use("/api/notificaciones", notificacionesTestRoutes);
 // 🔍 Ruta de prueba rápida
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong", timestamp: new Date() });
