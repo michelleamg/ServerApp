@@ -50,7 +50,8 @@ export const testController = {
       }
 
       // Puntaje final
-      const puntajeTotal = Math.round((initialScore + currentScore) / 2);
+      const puntajeTotal = answers.reduce((total, ans) => total + Number(ans.value), 0);
+
 
       await connection.query(
         `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion)
