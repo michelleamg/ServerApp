@@ -112,9 +112,9 @@ saveResults: async (req, res) => {
   getLastResult: async (req, res) => {
     try {
       const { id_paciente } = req.params;
-      const result = await Test.getLastResult(id_paciente);
+      const result = await Test.getAllResults(id_paciente);
 
-      if (!result) {
+      if (!result || result.length === 0) {
         return res.status(404).json({ success: false, message: "Sin resultados" });
       }
 
