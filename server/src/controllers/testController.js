@@ -174,7 +174,7 @@ export const testController = {
       // Guardar resultado básico
       await connection.query(
         `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion)
-         VALUES (?, 0, 'final_test_completed')`,
+         VALUES (?, ?, ?)`,
         [id_aplicacion]
       );
 
