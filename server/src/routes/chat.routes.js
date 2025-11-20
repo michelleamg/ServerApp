@@ -11,5 +11,5 @@ router.post("/enviar", ChatController.enviarMensaje);
 
 // 🔹 Obtener el psicólogo asignado a un paciente
 router.get("/psicologo/:id_paciente", ChatController.getPsychologistByPatient);
-
+router.get('/obtener-chat/:id_paciente', ChatController.obtenerChatPorPaciente);
 export default router;
