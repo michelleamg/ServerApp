@@ -168,6 +168,17 @@ export const Test = {
   );
   return rows;
 },
+findFinalApplication: async (id_paciente) => {
+  const [rows] = await pool.execute(
+    `SELECT * FROM aplicacion_test
+     WHERE id_paciente = ? AND tipo = 2
+     ORDER BY fecha DESC
+     LIMIT 1`,
+    [id_paciente]
+  );
+  return rows[0] || null;
+}
+,
 
 checkAssignedFinalTest: async (id_paciente) => {
   const [rows] = await pool.execute(

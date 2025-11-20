@@ -141,60 +141,77 @@ export const testController = {
     }
   },
 
-  // -----------------------------
-  //   GUARDAR TEST FINAL
-  // -----------------------------
-  saveFinalTest: async (req, res) => {
-    const connection = await pool.getConnection();
+      // -----------------------------
+      //   GUARDAR TEST FINAL
+      // -----------------------------
+      saveFinalTest: async (req, res) => {
+      const connection = await pool.getConnection();
 
-    try {
-      await connection.beginTransaction();
+      try {
+        await connection.beginTransaction();
 
-      const { id_paciente, answers } = req.body;
+        const { id_paciente, answers } = req.body;
 
-      if (!id_paciente || !answers) {
-        return res.status(400).json({
-          success: false,
-          error: "id_paciente y answers requeridos"
-        });
-      }
+        if (!id_paciente || !answers) {
+          return res.status(400).json({
+            success: false,
+            error: "id_paciente y answers requeridos"
+          });
+        }
 
-      // Crear aplicación del test final
-      const id_aplicacion = await Test.createApplication(2, id_paciente, 2);
+        // 🔍 Buscar aplicación existente
+        let aplicacion = await Test.findFinalApplication(id_paciente);
 
-      // Guardar respuestas
-      for (const ans of answers) {
+        // 🆕 Si no existe → crear una nueva
+        if (!aplicacion) {
+          const id_new = await Test.createApplication(2, id_paciente, 2);
+          aplicacion = { id_aplicacion: id_new };
+        }
+
+        const id_aplicacion = aplicacion.id_aplicacion;
+
+        // 📝 Guardar respuestas
+        for (const ans of answers) {
+          await connection.query(
+            `INSERT INTO respuesta_test (id_aplicacion, id_pregunta, respuesta)
+            VALUES (?, ?, ?)`,
+            [id_aplicacion, ans.id_pregunta, ans.value.toString()]
+          );
+        }
+
+        // 📊 Calcular puntaje
+        const puntaje_total = answers.reduce((sum, a) => sum + Number(a.value), 0);
+
+        const interpretacion =
+          puntaje_total >= 50 ? "Duelo severo"
+          : puntaje_total >= 30 ? "Duelo moderado"
+          : "Duelo leve";
+
+        // 💾 Guardar resultado bien
         await connection.query(
-          `INSERT INTO respuesta_test (id_aplicacion, id_pregunta, respuesta)
-           VALUES (?, ?, ?)`,
-          [id_aplicacion, ans.id_pregunta, ans.value.toString()]
+          `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion)
+          VALUES (?, ?, ?)`,
+          [id_aplicacion, puntaje_total, interpretacion]
         );
+
+        // ✔️ Marcar aplicación completada
+        await connection.query(
+          `UPDATE aplicacion_test SET estado='completado' WHERE id_aplicacion=?`,
+          [id_aplicacion]
+        );
+
+        await connection.commit();
+        connection.release();
+
+        res.json({ success: true, message: "Test final guardado", id_aplicacion });
+
+      } catch (error) {
+        await connection.rollback();
+        connection.release();
+        console.error("❌ Error en saveFinalTest:", error);
+        res.status(500).json({ success: false, error: "Error guardando test final" });
       }
+    },
 
-      // Guardar resultado básico
-      await connection.query(
-        `INSERT INTO resultado_test (puntaje_total, interpretacion)
-         VALUES ( ?, ?)`,
-        [id_aplicacion]
-      );
-
-      // Completar
-      await connection.query(
-        `UPDATE aplicacion_test SET estado='completado' WHERE id_aplicacion=?`,
-        [id_aplicacion]
-      );
-
-      await connection.commit();
-      connection.release();
-
-      res.json({ success: true, message: "Test final guardado", id_aplicacion });
-
-    } catch (error) {
-      await connection.rollback();
-      connection.release();
-      console.error("❌ Error en saveFinalTest:", error);
-      res.status(500).json({ success: false, error: "Error guardando test final" });
-    }
-  },
 
 };
