@@ -1,15 +1,14 @@
 import axios from "axios";
 
-export async function enviarPush(expoToken, title, body) {
+export async function enviarPush(token, title, body) {
   try {
     await axios.post("https://exp.host/--/api/v2/push/send", {
-      to: expoToken,
+      to: token,
+      sound: "default",
       title,
       body,
-      sound: "default",
-      priority: "high",
     });
-  } catch (error) {
-    console.error("❌ Error enviando notificación:", error);
+  } catch (err) {
+    console.error("❌ Error enviando push:", err);
   }
 }
