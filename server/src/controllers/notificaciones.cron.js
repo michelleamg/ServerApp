@@ -25,7 +25,7 @@ cron.schedule("* * * * *", async () => {
       `SELECT r.id_paciente, r.hora, t.push_token
        FROM paciente_recordatorios r
        JOIN paciente_push_tokens t ON r.id_paciente = t.id_paciente
-       WHERE r.hora = ?`,
+       WHERE r.hora LIKE CONCAT(?, '%')`,
       [horaActual]
     );
 
