@@ -21,8 +21,8 @@ export async function enviarPush(token, title, body) {
 
         // 👇👇 **AQUÍ VA TU LOGO A COLOR**
         // Imagen grande para la notificación
-        bigPicture:
-          "https://api-mobile.midueloapp.com/images/noti_colibri.png",
+        image:
+          "https://api-mobile.midueloapp.com/images/duelingo.png",
 
         // Pequeño ícono en color — NOTE: Android NO permite íconos pequeños a color,
         // pero sí permite bigPicture con color.
