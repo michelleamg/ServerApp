@@ -1,12 +1,12 @@
 import { Router } from "express";
 import db from "../db/db.js";
-import { enviarPush } from "../services/push.service.js";
+import { enviarPush } from "../utils/push.service.js";
 import "../controllers/notificaciones.cron.js";
 
 const router = Router();
 
 /* ---------------------------------------------
-   1. Registrar token push del paciente
+   1. Registrar token
 ----------------------------------------------*/
 router.post("/register-token", async (req, res) => {
   const { id_paciente, push_token } = req.body;
@@ -31,7 +31,7 @@ router.post("/register-token", async (req, res) => {
 });
 
 /* ---------------------------------------------
-   2. Configurar recordatorio diario
+   2. Guardar recordatorio
 ----------------------------------------------*/
 router.post("/configurar", async (req, res) => {
   const { id_paciente, hora } = req.body;
@@ -56,7 +56,7 @@ router.post("/configurar", async (req, res) => {
 });
 
 /* ---------------------------------------------
-   3. Obtener hora del recordatorio
+   3. Obtener recordatorio
 ----------------------------------------------*/
 router.get("/recordatorio/:id_paciente", async (req, res) => {
   const { id_paciente } = req.params;
@@ -75,21 +75,6 @@ router.get("/recordatorio/:id_paciente", async (req, res) => {
   } catch (err) {
     console.error("❌ Error obteniendo recordatorio:", err);
     return res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-
-/* ---------------------------------------------
-   4. Endpoint opcional para probar notificación
-----------------------------------------------*/
-router.post("/test", async (req, res) => {
-  try {
-    const { token } = req.body;
-
-    await enviarPush(token, "Mensaje de prueba", "Esto es una notificación de test ✔");
-
-    return res.json({ success: true, message: "Notificación enviada" });
-  } catch (error) {
-    return res.status(500).json({ error: "No se pudo enviar la notificación" });
   }
 });
 
