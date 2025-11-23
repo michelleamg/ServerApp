@@ -5,22 +5,38 @@ export const testController = {
 
   // Obtener preguntas
   getQuestions: async (req, res) => {
-    try {
-      const questions = Test.getQuestions();
-      res.json({ success: true, questions });
-    } catch (error) {
-      console.error("❌ Error en getQuestions:", error);
-      res.status(500).json({ success: false, error: "Error al obtener preguntas" });
-    }
-  },
+  try {
+    const questions = Test.getQuestions();
+    res.json({ 
+      success: true, 
+      questions,
+      informacion: {
+        nombre: "Inventario Texas Revisado de Duelo (ITRD)",
+        partes: {
+          parte1: {
+            nombre: "Comportamiento en el Pasado (Duelo Agudo)",
+            items: 8,
+            puntuacionMaxima: 40,
+            descripcion: "Evalúa la conducta y los sentimientos del doliente en los momentos inmediatos al fallecimiento"
+          },
+          parte2: {
+            nombre: "Sentimientos Actuales (Duelo Actual)", 
+            items: 13,
+            puntuacionMaxima: 65,
+            descripcion: "Evalúa los sentimientos actuales del doliente en relación con el fallecido"
+          }
+        },
+        puntuacionTotalMaxima: 105,
+        escala: "Likert de 5 puntos (1: Completamente falsa - 5: Completamente verdadera)"
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error en getQuestions:", error);
+    res.status(500).json({ success: false, error: "Error al obtener preguntas" });
+  }
+},
 
-  // -----------------------------
-  //   GUARDAR TEST INICIAL
-  // -----------------------------
-  // -----------------------------
-//   GUARDAR TEST INICIAL
-// -----------------------------
-saveResults: async (req, res) => {
+  saveResults: async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
@@ -38,6 +54,18 @@ saveResults: async (req, res) => {
     // Crear aplicación del test inicial (tipo 1)
     const id_aplicacion = await Test.createApplication(1, userId, 1);
 
+    // Separar respuestas por parte
+    const respuestasParte1 = answers.filter(a => a.questionId <= 8);
+    const respuestasParte2 = answers.filter(a => a.questionId > 8 && a.questionId <= 21);
+
+    // Verificar que se respondieron todas las preguntas
+    if (respuestasParte1.length !== 8 || respuestasParte2.length !== 13) {
+      return res.status(400).json({
+        success: false,
+        error: "Debe responder todas las 21 preguntas del inventario"
+      });
+    }
+
     // Guardar cada respuesta
     for (const ans of answers) {
       await connection.query(
@@ -52,23 +80,58 @@ saveResults: async (req, res) => {
       );
     }
 
-    // SUMAR TODAS las preguntas (1–5)
-    const puntajeTotal = answers.reduce(
-      (sum, ans) => sum + Number(ans.value),
-      0
-    );
+    // ✅ CALCULAR PUNTAJES SEGÚN ITRD
+    const puntajeParte1 = respuestasParte1.reduce((sum, ans) => sum + Number(ans.value), 0);
+    const puntajeParte2 = respuestasParte2.reduce((sum, ans) => sum + Number(ans.value), 0);
+    const puntajeTotal = puntajeParte1 + puntajeParte2;
 
-    // Interpretación basada en puntaje total (21–105)
-    const interpretacion =
-      puntajeTotal >= 76 ? "Duelo severo" :
-      puntajeTotal >= 46 ? "Duelo moderado" :
-      "Duelo leve";
+    // ✅ PUNTOS DE CORTE SEGÚN ITRD (Percentil 50 - Referencia estudios)
+    const PUNTUACION_ALTA_PARTE1 = 16; // P50 Duelo Agudo
+    const PUNTUACION_ALTA_PARTE2 = 32; // P50 Duelo Actual
 
-    // Guardar resultado final
+    // ✅ CLASIFICACIÓN PROFESIONAL SEGÚN FASCHINGBAUER
+    const esAltaParte1 = puntajeParte1 >= PUNTUACION_ALTA_PARTE1;
+    const esAltaParte2 = puntajeParte2 >= PUNTUACION_ALTA_PARTE2;
+
+    let tipoDuelo, interpretacion, riesgoComplicado;
+
+    if (esAltaParte1 && esAltaParte2) {
+      tipoDuelo = "Duelo Prolongado/Crónico";
+      interpretacion = "La respuesta inicial fue intensa y los sentimientos persisten en el presente. Alto riesgo de duelo complicado.";
+      riesgoComplicado = "Alto";
+    } else if (!esAltaParte1 && !esAltaParte2) {
+      tipoDuelo = "Duelo Ausente";
+      interpretacion = "La reacción inicial fue baja y el malestar actual también es bajo. Puede indicar un duelo superado o ausencia de reacción.";
+      riesgoComplicado = "Bajo";
+    } else if (esAltaParte1 && !esAltaParte2) {
+      tipoDuelo = "Duelo Agudo/Normal";
+      interpretacion = "La reacción inicial fue intensa, pero ha logrado una adaptación actual a la pérdida. Generalmente se considera un duelo normativo.";
+      riesgoComplicado = "Moderado";
+    } else { // !esAltaParte1 && esAltaParte2
+      tipoDuelo = "Duelo Retardado/Inhibido";
+      interpretacion = "La reacción inicial fue reprimida, pero el dolor se manifiesta intensamente en el presente. Riesgo de duelo complicado.";
+      riesgoComplicado = "Moderado-Alto";
+    }
+
+    // ✅ GUARDAR RESULTADOS EN LA BD
     await connection.query(
-      `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion)
-       VALUES (?, ?, ?)`,
-      [id_aplicacion, puntajeTotal, interpretacion]
+      `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion, tipo_resultado, tipo_duelo, riesgo_complicado)
+       VALUES (?, ?, ?, 'parte1', ?, ?), 
+              (?, ?, ?, 'parte2', ?, ?), 
+              (?, ?, ?, 'general', ?, ?)`,
+      [
+        // Parte I
+        id_aplicacion, puntajeParte1, `Duelo Agudo: ${puntajeParte1}/40 puntos`, 
+        tipoDuelo, riesgoComplicado,
+        
+        // Parte II  
+        id_aplicacion, puntajeParte2, `Duelo Actual: ${puntajeParte2}/65 puntos`,
+        tipoDuelo, riesgoComplicado,
+        
+        // General
+        id_aplicacion, puntajeTotal, interpretacion,
+        tipoDuelo, riesgoComplicado
+      ]
     );
 
     // Marcar como completado
@@ -82,9 +145,36 @@ saveResults: async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Test guardado exitosamente",
-      puntajeTotal,
-      interpretacion
+      message: "Inventario Texas de Duelo Revisado completado exitosamente",
+      resultados: {
+        parte1: { 
+          puntaje: puntajeParte1, 
+          maximo: 40,
+          interpretacion: `Duelo Agudo: ${puntajeParte1}/40 puntos`,
+          nivel: esAltaParte1 ? "Alto" : "Bajo"
+        },
+        parte2: { 
+          puntaje: puntajeParte2, 
+          maximo: 65,
+          interpretacion: `Duelo Actual: ${puntajeParte2}/65 puntos`, 
+          nivel: esAltaParte2 ? "Alto" : "Bajo"
+        },
+        general: { 
+          puntaje: puntajeTotal, 
+          maximo: 105,
+          tipoDuelo: tipoDuelo,
+          interpretacion: interpretacion,
+          riesgoComplicado: riesgoComplicado
+        },
+        clasificacion: {
+          parte1Alta: esAltaParte1,
+          parte2Alta: esAltaParte2,
+          puntosCorte: {
+            parte1: PUNTUACION_ALTA_PARTE1,
+            parte2: PUNTUACION_ALTA_PARTE2
+          }
+        }
+      }
     });
 
   } catch (error) {

@@ -80,33 +80,36 @@ export const Test = {
 
   // Obtener preguntas del test
   getQuestions: () => {
-  return [
-    // PARTE I (8 ítems)
-    { id: 1, section: "initial", text: "Tras su muerte me costaba relacionarme con algunas personas." },
-    { id: 2, section: "initial", text: "Tras su muerte me costaba concentrarme en mi trabajo." },
-    { id: 3, section: "initial", text: "Tras su muerte perdí el interés en mi familia, amigos y actividades fuera de casa." },
-    { id: 4, section: "initial", text: "Tenía la necesidad de hacer las cosas que él/ella había querido hacer." },
-    { id: 5, section: "initial", text: "Después de su muerte estaba más irritable de lo normal." },
-    { id: 6, section: "initial", text: "En los tres primeros meses después de su muerte me sentía incapaz de realizar mis actividades habituales." },
-    { id: 7, section: "initial", text: "Me sentía furioso/a porque me había abandonado." },
-    { id: 8, section: "initial", text: "Tras su muerte me costaba trabajo dormir." },
-
-    // PARTE II (13 ítems)
-    { id: 9, section: "current", text: "Todavía tengo ganas de llorar cuando pienso en él/ella." },
-    { id: 10, section: "current", text: "Todavía me pongo triste cuando pienso en él/ella." },
-    { id: 11, section: "current", text: "No puedo aceptar su muerte." },
-    { id: 12, section: "current", text: "A veces la/le echo mucho de menos." },
-    { id: 13, section: "current", text: "Todavía me resulta doloroso traer a la memoria su recuerdo." },
-    { id: 14, section: "current", text: "A menudo me quedo ensimismado pensando en él/ella." },
-    { id: 15, section: "current", text: "Lloro a escondidas cuando pienso en él/ella." },
-    { id: 16, section: "current", text: "Nadie podrá ocupar jamás el lugar que él/ella ha dejado en mi vida." },
-    { id: 17, section: "current", text: "No puedo dejar de pensar en él/ella." },
-    { id: 18, section: "current", text: "Creo que no es justo que haya muerto." },
-    { id: 19, section: "current", text: "Las personas que me rodean todavía me hacen recordarla/le." },
-    { id: 20, section: "current", text: "Soy incapaz de aceptar su muerte." },
-    { id: 21, section: "current", text: "A veces me invade la necesidad de que él/ella esté conmigo." }
-    ];
-  },
+  return {
+    // ✅ PARTE I - 8 PREGUNTAS: Comportamiento en el Pasado (Duelo Agudo)
+    parte1: [
+      { id: 1, section: "past", text: "Tras su muerte me costaba relacionarme con algunas personas." },
+      { id: 2, section: "past", text: "Tras su muerte me costaba concentrarme en mi trabajo." },
+      { id: 3, section: "past", text: "Tras su muerte perdí el interés en mi familia, amigos y actividades fuera de casa." },
+      { id: 4, section: "past", text: "Tenía la necesidad de hacer las cosas que él/ella había querido hacer." },
+      { id: 5, section: "past", text: "Después de su muerte estaba más irritable de lo normal." },
+      { id: 6, section: "past", text: "En los tres primeros meses después de su muerte me sentía incapaz de realizar mis actividades habituales." },
+      { id: 7, section: "past", text: "Me sentía furioso/a porque me había abandonado." },
+      { id: 8, section: "past", text: "Tras su muerte me costaba trabajo dormir." }
+    ],
+    // ✅ PARTE II - 13 PREGUNTAS: Sentimientos Actuales (Duelo Actual)
+    parte2: [
+      { id: 9, section: "current", text: "Todavía tengo ganas de llorar cuando pienso en él/ella." },
+      { id: 10, section: "current", text: "Todavía me pongo triste cuando pienso en él/ella." },
+      { id: 11, section: "current", text: "No puedo aceptar su muerte." },
+      { id: 12, section: "current", text: "A veces la/le echo mucho de menos." },
+      { id: 13, section: "current", text: "Todavía me resulta doloroso traer a la memoria su recuerdo." },
+      { id: 14, section: "current", text: "A menudo me quedo ensimismado pensando en él/ella." },
+      { id: 15, section: "current", text: "Lloro a escondidas cuando pienso en él/ella." },
+      { id: 16, section: "current", text: "Nadie podrá ocupar jamás el lugar que él/ella ha dejado en mi vida." },
+      { id: 17, section: "current", text: "No puedo dejar de pensar en él/ella." },
+      { id: 18, section: "current", text: "Creo que no es justo que haya muerto." },
+      { id: 19, section: "current", text: "Las personas que me rodean todavía me hacen recordarla/le." },
+      { id: 20, section: "current", text: "Soy incapaz de aceptar su muerte." },
+      { id: 21, section: "current", text: "A veces me invade la necesidad de que él/ella esté conmigo." }
+    ]
+  };
+},
 
       // Método mejorado para TestResult.js
 // Reemplaza el método checkIfCompleted existente con este:
