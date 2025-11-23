@@ -12,9 +12,11 @@ export async function enviarPush(token, title, body) {
       {
         to: token,
         sound: "default",
-        title,
-        body,
+        title: title || "🌿 MiDuelo — Recordatorio diario",
+        subtitle: "Tu bienestar importa",
+        body: body || "Tómate un minuto para tus actividades de autocuidado 💚",
         priority: "high",
+        channelId: "diario", // Canal personalizado
       },
       {
         headers: {
