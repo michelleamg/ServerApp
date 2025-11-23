@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import { createServer } from "http"; // ← Usar HTTP temporalmente
 import { Server } from "socket.io";
 import notificacionesRoutes from "./routes/notificaciones.routes.js";
-import notificacionesTestRoutes from "./routes/notificaciones.test.routes.js";
+
 
 // Importar rutas
 import indexRoutes from "./routes/index.routes.js";
