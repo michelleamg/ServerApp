@@ -117,7 +117,8 @@ export const testController = {
     await connection.query(
       `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion, tipo_resultado, tipo_duelo, riesgo_complicado)
        VALUES (?, ?, ?, 'parte1', ?, ?), 
-              (?, ?, ?, 'parte2', ?, ?),`,
+              (?, ?, ?, 'parte2', ?, ?), 
+              (?, ?, ?, 'general', ?, ?)`,
       [
         // Parte I
         id_aplicacion, puntajeParte1, `Duelo Agudo: ${puntajeParte1}/40 puntos`, 
@@ -149,13 +150,13 @@ export const testController = {
         parte1: { 
           puntaje: puntajeParte1, 
           maximo: 40,
-          interpretacion: `Duelo Agudo`,
+          interpretacion: `Duelo Agudo: ${puntajeParte1}/40 puntos`,
           nivel: esAltaParte1 ? "Alto" : "Bajo"
         },
         parte2: { 
           puntaje: puntajeParte2, 
           maximo: 65,
-          interpretacion: `Duelo Actual`, 
+          interpretacion: `Duelo Actual: ${puntajeParte2}/65 puntos`, 
           nivel: esAltaParte2 ? "Alto" : "Bajo"
         },
         general: { 
