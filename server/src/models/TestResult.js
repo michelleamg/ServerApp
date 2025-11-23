@@ -142,26 +142,29 @@ export const Test = {
     },
     // ✅ Obtener el último resultado del test de un paciente
   getAllResults: async (id_paciente) => {
-    const [rows] = await pool.execute(
-      `
-      SELECT 
-        r.id_resultado,
-        r.puntaje_total,
-        r.interpretacion,
-        a.id_test,
-        a.tipo,
-        a.fecha
-      FROM resultado_test r
-      INNER JOIN aplicacion_test a 
-        ON r.id_aplicacion = a.id_aplicacion
-      WHERE a.id_paciente = ?
-      ORDER BY a.tipo ASC
-      `,
-      [id_paciente]
-    );
+  const [rows] = await pool.execute(
+    `
+    SELECT 
+      r.id_resultado,
+      r.puntaje_total,
+      r.interpretacion,
+      r.tipo_duelo,
+      r.riesgo_complicado,
+      a.id_test,
+      a.tipo,
+      a.fecha
+    FROM resultado_test r
+    INNER JOIN aplicacion_test a 
+      ON r.id_aplicacion = a.id_aplicacion
+    WHERE a.id_paciente = ?
+    AND r.tipo_resultado = 'general'
+    ORDER BY a.tipo ASC, a.fecha DESC
+    `,
+    [id_paciente]
+  );
 
-    return rows;
-  },
+  return rows;
+},
 
 
   getQuestionsByTest: async (id_test) => {
