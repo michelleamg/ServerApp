@@ -14,22 +14,23 @@ export async function enviarPush(token, title, body) {
         sound: "default",
         priority: "high",
 
-        // 🟩 TÍTULO Y CUERPO
-        title: title, // ej: "Recordatorio diario"
-        subtitle: "MiDuelo — Tu espacio para sanar 💚", // 🟩 AÑADIDO
-        body: body,
+        // Título y cuerpo personalizados
+        title: "🌿 Recordatorio diario",
+        subtitle: "Tu bienestar es importante",
+        body: "No olvides realizar tus actividades del día 💚",
 
-        // 🟦 IMAGEN GRANDE A COLOR (Big Picture)
-        channelId: "default",
-        androidStyle: "bigpicture",
-        androidPicture: "https://api-mobile.midueloapp.com/uploads/colibri.png",
-        androidLargeIcon: "https://api-mobile.midueloapp.com/uploads/colibri.png",
+        // 👇👇 **AQUÍ VA TU LOGO A COLOR**
+        // Imagen grande para la notificación
+        bigPicture:
+          "https://api-mobile.midueloapp.com/images/noti_colibri.png",
 
-        // ocultar el ícono pequeño blanco
-        androidSmallIcon: null,
+        // Pequeño ícono en color — NOTE: Android NO permite íconos pequeños a color,
+        // pero sí permite bigPicture con color.
       },
       {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
     );
 
@@ -38,7 +39,6 @@ export async function enviarPush(token, title, body) {
     } else {
       console.warn("⚠️ Expo devolvió advertencia:", response.data);
     }
-
   } catch (err) {
     if (err.response) {
       console.error("❌ Error de Expo:", err.response.data);
