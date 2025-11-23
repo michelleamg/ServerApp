@@ -3,9 +3,9 @@ import db from "../db/db.js";
 import { enviarPush } from "../utils/push.service.js";
 
 cron.schedule("* * * * *", async () => {
-  const ahora = new Date();
-  const hh = ahora.getHours().toString().padStart(2, "0");
-  const mm = ahora.getMinutes().toString().padStart(2, "0");
+  const now = new Date();
+  const hh = now.getHours().toString().padStart(2, "0");
+  const mm = now.getMinutes().toString().padStart(2, "0");
   const horaActual = `${hh}:${mm}`;
 
   try {
@@ -26,9 +26,9 @@ cron.schedule("* * * * *", async () => {
     }
 
     if (rows.length > 0) {
-      console.log(`🔔 ${rows.length} recordatorios enviados a las ${horaActual}`);
+      console.log(`🔔 Se enviaron ${rows.length} recordatorios a las ${horaActual}`);
     }
-  } catch (error) {
-    console.error("❌ Error ejecutando CRON:", error);
+  } catch (err) {
+    console.error("❌ Error ejecutando CRON:", err);
   }
 });
