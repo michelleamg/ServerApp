@@ -7,6 +7,12 @@ export const pool = createPool({
   password: DB_PASS,
   port: DB_PORT,
   database: DB_DATABASE,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  acquireTimeout: 60000, // 60 segundos
+  timeout: 60000, // 60 segundos
+  reconnect: true
 });
 
 export default pool;
