@@ -1,6 +1,8 @@
 import { Router } from "express";
 import db from "../db/db.js";
 import { enviarPush } from "../utils/push.service.js";
+
+// 🟢 Importar el CRON desde controllers (tu nueva ubicación)
 import "../controllers/notificaciones.cron.js";
 
 const router = Router();
