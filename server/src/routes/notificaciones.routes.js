@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db from "../db/db.js";
 import { enviarPush } from "../services/push.service.js";
-import "./../cron/notificaciones.cron.js"; // importante
+import "../controllers/notificaciones.cron.js";
 
 const router = Router();
 
