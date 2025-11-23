@@ -13,7 +13,6 @@ export const Test = {
         throw new Error("El paciente ya completó el test inicial.");
       }
 
-      // 2️⃣ Obtener psicólogo asignado
       const [pacienteRows] = await pool.execute(
         'SELECT id_psicologo FROM paciente WHERE id_paciente = ?',
         [id_paciente]
