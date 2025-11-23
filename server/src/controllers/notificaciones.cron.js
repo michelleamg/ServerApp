@@ -7,7 +7,7 @@ cron.schedule("* * * * *", async () => {
   const hh = now.getHours().toString().padStart(2, "0");
   const mm = now.getMinutes().toString().padStart(2, "0");
   const horaActual = `${hh}:${mm}`;
-
+   console.log("⏱️ CRON revisando recordatorios para hora:", horaActual);
   try {
     const [rows] = await db.query(
       `SELECT r.id_paciente, r.hora, t.push_token
