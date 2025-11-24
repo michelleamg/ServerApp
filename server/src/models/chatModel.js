@@ -1,18 +1,5 @@
 import pool from "../db/db.js";
-import { encryptMessage, decryptMessage } from "../utils/cryptoUtils.js"; // ✅ usamos el helper
-
-  function fechaLocalReal() {
-    const ahora = new Date();
-    return new Date(
-      ahora.getFullYear(),
-      ahora.getMonth(),
-      ahora.getDate(),
-      ahora.getHours(),
-      ahora.getMinutes(),
-      ahora.getSeconds()
-    );
-  }
-
+import { encryptMessage, decryptMessage } from "../utils/cryptoUtils.js";
 
 export const ChatModel = {
   // 📥 Obtener mensajes descifrados de un chat
@@ -33,16 +20,19 @@ export const ChatModel = {
   },
 
   // 📤 Guardar mensaje cifrado
+  // ✅ SOLUCIÓN: Forzar que MySQL interprete NOW() como hora de México
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
-    const fecha_envio = fechaLocalReal(); // 👈 hora real sin UTC
 
+    // ✅ Usar CONVERT_TZ para asegurar que la hora sea de México
+    // Esto funciona independientemente del tipo de columna (TIMESTAMP o DATETIME)
     const [res] = await pool.query(
-      "INSERT INTO mensaje (id_chat, remitente, contenido, fecha_envio) VALUES (?, ?, ?, ?)",
-      [id_chat, remitente, contenidoCifrado, fecha_envio]
-      );
+      `INSERT INTO mensaje (id_chat, remitente, contenido, fecha_envio) 
+       VALUES (?, ?, ?, CONVERT_TZ(NOW(), @@session.time_zone, 'America/Mexico_City'))`,
+      [id_chat, remitente, contenidoCifrado]
+    );
 
-      return res.insertId;
+    return res.insertId;
   },
 
   // 👨‍⚕️ Obtener psicólogo asignado a un paciente
