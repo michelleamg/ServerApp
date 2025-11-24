@@ -7,6 +7,32 @@ import "../controllers/notificaciones.cron.js";
 
 const router = Router();
 
+// 🟢 Registrar o actualizar token manualmente
+router.post("/push/update-token", async (req, res) => {
+  const { id_paciente, token } = req.body;
+
+  if (!id_paciente || !token) {
+    return res.status(400).json({ error: "Falta id_paciente o token" });
+  }
+
+  try {
+    await db.query(
+      `REPLACE INTO paciente_push_tokens (id_paciente, push_token, fecha_registro)
+       VALUES (?, ?, NOW())`,
+      [id_paciente, token]
+    );
+
+    res.json({
+      ok: true,
+      message: "Token actualizado exitosamente",
+      id_paciente,
+      token
+    });
+  } catch (err) {
+    console.error("❌ Error actualizando token:", err);
+    res.status(500).json({ error: "Error al actualizar token" });
+  }
+});
 // 🧪 Endpoint para probar un token manualmente
 router.post("/push/test", async (req, res) => {
   try {
