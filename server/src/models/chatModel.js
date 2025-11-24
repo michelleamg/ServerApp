@@ -19,13 +19,10 @@ export const ChatModel = {
     }));
   },
 
-  // 📤 Guardar mensaje cifrado
-  // ✅ SOLUCIÓN: Forzar que MySQL interprete NOW() como hora de México
   async save({ id_chat, remitente, contenido }) {
     const contenidoCifrado = encryptMessage(contenido);
 
-    // ✅ Usar CONVERT_TZ para asegurar que la hora sea de México
-    // Esto funciona independientemente del tipo de columna (TIMESTAMP o DATETIME)
+    
     const [res] = await pool.query(
       `INSERT INTO mensaje (id_chat, remitente, contenido, fecha_envio) 
        VALUES (?, ?, ?, CONVERT_TZ(NOW(), @@session.time_zone, 'America/Mexico_City'))`,
@@ -116,5 +113,17 @@ export const ChatModel = {
       [id_paciente, id_psicologo]
     );
     return rows.length > 0 ? rows[0].id_chat : null;
+  },
+
+  async getUltimoMensaje(id_chat) {
+    const [rows] = await pool.query(
+      `SELECT id_mensaje, remitente, fecha_envio 
+      FROM mensaje 
+      WHERE id_chat = ? 
+      ORDER BY id_mensaje DESC 
+      LIMIT 1`,
+      [id_chat]
+    );
+    return rows.length > 0 ? rows[0] : null;
   },
 };

@@ -82,4 +82,17 @@ export const ChatController = {
       });
     }
   },
+
+  async hayNuevosMensajes(req, res) {
+    const { id_chat, lastId } = req.query;
+    
+    const ultimoMensaje = await ChatModel.getUltimoMensaje(id_chat);
+    const hayNuevos = ultimoMensaje.id_mensaje > parseInt(lastId);
+    
+    res.json({ 
+      hayNuevos, 
+      ultimoId: ultimoMensaje.id_mensaje,
+      cantidad: hayNuevos ? ultimoMensaje.id_mensaje - parseInt(lastId) : 0
+    });
+  }
 };
