@@ -1,25 +1,44 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import { registrarActividadPacienteFoto } from "../controllers/actividadPacienteController.js";
+import { ActividadPaciente } from "../models/actividadPacienteModel.js";
 
 const router = express.Router();
 
-// 📂 Carpeta donde se guardarán las fotos
+// Ruta para guardar las fotos en /uploads/evidencias
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/evidencias");
-  },
+  destination: "uploads/evidencias",
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `evidencia_${Date.now()}${ext}`;
-    cb(null, name);
-  },
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
 });
 
 const upload = multer({ storage });
 
-// ⭐ NUEVO ENDPOINT
-router.post("/foto", upload.single("archivo"), registrarActividadPacienteFoto);
+router.post("/", upload.single("archivo"), async (req, res) => {
+  try {
+    const { id_paciente, id_actividad, estado } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No se recibió ninguna imagen" });
+    }
+
+    const rutaFoto = "/uploads/Actividades/" + req.file.filename;
+
+    const result = await ActividadPaciente.registrar({
+      id_paciente,
+      id_actividad,
+      estado,
+      evidencia_foto: rutaFoto,
+      duracion_segundos: null,
+      evidencia_texto: null
+    });
+
+    return res.status(201).json({ message: "Foto guardada", result });
+  } catch (err) {
+    console.error("❌ Error guardando evidencia:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;
