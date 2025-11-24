@@ -10,36 +10,23 @@ export async function enviarPush(token, title, body) {
     const response = await axios.post(
       "https://exp.host/--/api/v2/push/send",
       {
-        // 🔥 Siempre enviar como arreglo aunque sea 1 token
+        // ✔️ Expo recomienda arreglo
         to: [token],
 
-        sound: "default",
-        priority: "high",
-
-        // Canal por defecto (ya existe en Android)
-        channelId: "default",
-
-        // Mensaje sencillo
+        // ✔️ No usar parámetros avanzados
         title: title || "🌿 Recordatorio",
         body: body || "No olvides revisar tus actividades 💚",
+
+        // ✔️ Canal por defecto, SIEMPRE funciona
+        channelId: "default",
       },
       {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
 
-    if (response.data?.data?.status === "ok") {
-      console.log(`📨 Push enviado a: ${token}`);
-    } else {
-      console.warn("⚠️ Expo devolvió advertencia:", response.data);
-    }
+    console.log("📨 Expo respuesta:", response.data);
   } catch (err) {
-    if (err.response) {
-      console.error("❌ Error de Expo:", err.response.data);
-    } else {
-      console.error("❌ Error enviando push:", err.message);
-    }
+    console.error("❌ Error enviando push:", err.response?.data || err.message);
   }
 }
