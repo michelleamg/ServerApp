@@ -10,26 +10,18 @@ export async function enviarPush(token, title, body) {
     const response = await axios.post(
       "https://exp.host/--/api/v2/push/send",
       {
-        to: token,
+        // 🔥 Siempre enviar como arreglo aunque sea 1 token
+        to: [token],
+
         sound: "default",
         priority: "high",
 
-        // 🔥 🔥 NECESARIO PARA ANDROID (canal donde SÍ se muestran imágenes)
-        channelId: "diario",
+        // Canal por defecto (ya existe en Android)
+        channelId: "default",
 
-        // Título y cuerpo personalizados
-        title: "🌿 Recordatorio diario",
-        subtitle: "Tu bienestar es importante",
-        body: "No olvides realizar tus actividades del día 💚",
-
-        // 👇👇 **AQUÍ VA LOGO A COLOR**
-        // Imagen grande para la notificación
-        bigPicture: "https://api-mobile.midueloapp.com/images/duelingo.png",
-        image:
-          "https://api-mobile.midueloapp.com/images/duelingo.png",
-
-        // Pequeño ícono en color — NOTE: Android NO permite íconos pequeños a color,
-        // pero sí permite bigPicture con color.
+        // Mensaje sencillo
+        title: title || "🌿 Recordatorio",
+        body: body || "No olvides revisar tus actividades 💚",
       },
       {
         headers: {
