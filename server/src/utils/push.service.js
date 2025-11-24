@@ -22,8 +22,9 @@ export async function enviarPush(token, title, body) {
         subtitle: "Tu bienestar es importante",
         body: "No olvides realizar tus actividades del día 💚",
 
-        // 👇👇 **AQUÍ VA TU LOGO A COLOR**
+        // 👇👇 **AQUÍ VA LOGO A COLOR**
         // Imagen grande para la notificación
+        bigPicture: "https://api-mobile.midueloapp.com/images/duelingo.png",
         image:
           "https://api-mobile.midueloapp.com/images/duelingo.png",
 
