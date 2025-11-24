@@ -10,44 +10,23 @@ export async function enviarPush(token, title, body) {
     const response = await axios.post(
       "https://exp.host/--/api/v2/push/send",
       {
-        to: token,
-        sound: "default",
-        priority: "high",
+        // ✔️ Expo recomienda arreglo
+        to: [token],
 
-        // 🔥 🔥 NECESARIO PARA ANDROID (canal donde SÍ se muestran imágenes)
-        channelId: "diario",
+        // ✔️ No usar parámetros avanzados
+        title: title || "🌿 Recordatorio",
+        body: body || "No olvides revisar tus actividades 💚",
 
-        // Título y cuerpo personalizados
-        title: "🌿 Recordatorio diario",
-        subtitle: "Tu bienestar es importante",
-        body: "No olvides realizar tus actividades del día 💚",
-
-        // 👇👇 **AQUÍ VA LOGO A COLOR**
-        // Imagen grande para la notificación
-        bigPicture: "https://api-mobile.midueloapp.com/images/duelingo.png",
-        image:
-          "https://api-mobile.midueloapp.com/images/duelingo.png",
-
-        // Pequeño ícono en color — NOTE: Android NO permite íconos pequeños a color,
-        // pero sí permite bigPicture con color.
+        // ✔️ Canal por defecto, SIEMPRE funciona
+        channelId: "default",
       },
       {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
 
-    if (response.data?.data?.status === "ok") {
-      console.log(`📨 Push enviado a: ${token}`);
-    } else {
-      console.warn("⚠️ Expo devolvió advertencia:", response.data);
-    }
+    console.log("📨 Expo respuesta:", response.data);
   } catch (err) {
-    if (err.response) {
-      console.error("❌ Error de Expo:", err.response.data);
-    } else {
-      console.error("❌ Error enviando push:", err.message);
-    }
+    console.error("❌ Error enviando push:", err.response?.data || err.message);
   }
 }
