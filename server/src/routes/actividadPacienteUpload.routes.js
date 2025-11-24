@@ -2,13 +2,15 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { registrarActividadPacienteFoto } from "../controllers/actividadPacienteController.js";
+
 
 const router = express.Router();
 
 // 📁 Reutilizamos mismo storage pero en otra carpeta
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.resolve("uploads/actividades");
+    const uploadPath = path.resolve("uploads/Actividades");
     if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
@@ -46,5 +48,8 @@ router.post("/actividad-foto", upload.single("archivo"), async (req, res) => {
     });
   }
 });
+
+router.post("/foto", upload.single("archivo"), registrarActividadPacienteFoto);
+
 
 export default router;

@@ -81,6 +81,9 @@ app.use("/api", evidenciasRoutes);
 app.use("/api/notificaciones", notificacionesRoutes);
 app.use("/api/actividades-paciente", actividadPacienteRoutes);
 app.use("/api", actividadPacienteUploadRoutes);
+app.use("/api/actividades-paciente", actividadPacienteUploadRoutes); // <-- AQUI
+
+
 
 
 

@@ -12,4 +12,5 @@ router.post("/", registrarActividadPaciente);
 
 router.get("/:id_paciente", getActividadesPaciente);
 
+
 export default router;

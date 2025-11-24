@@ -41,6 +41,43 @@ export const registrarActividadPaciente = async (req, res) => {
   }
 };
 
+export const registrarActividadPacienteFoto = async (req, res) => {
+  try {
+    const { id_paciente, id_actividad, estado } = req.body;
+    const archivo = req.file;
+
+    if (!archivo) {
+      return res.status(400).json({ success: false, error: "No se envió archivo" });
+    }
+
+    const evidencia_foto = `/uploads/evidencias/${archivo.filename}`;
+
+    const result = await ActividadPaciente.registrar({
+      id_paciente,
+      id_actividad,
+      estado: estado || "completada",
+      evidencia_foto,
+      evidencia_texto: null,
+      duracion_segundos: null
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Evidencia fotográfica guardada",
+      path: evidencia_foto,
+      id_actividad_paciente: result.id
+    });
+
+  } catch (error) {
+    console.error("Error registrar foto:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error al guardar evidencia fotográfica"
+    });
+  }
+};
+
+
 
 export const getActividadesPaciente = async (req, res) => {
   try {
