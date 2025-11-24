@@ -14,6 +14,9 @@ export async function enviarPush(token, title, body) {
         sound: "default",
         priority: "high",
 
+        // 🔥 🔥 NECESARIO PARA ANDROID (canal donde SÍ se muestran imágenes)
+        channelId: "diario",
+
         // Título y cuerpo personalizados
         title: "🌿 Recordatorio diario",
         subtitle: "Tu bienestar es importante",
