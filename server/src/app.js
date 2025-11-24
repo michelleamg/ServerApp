@@ -24,7 +24,7 @@ import evidenciasRoutes from "./routes/evidencia.routes.js";
 import { SocketController } from "./controllers/socketController.js";
 import actividadPacienteRoutes from "./routes/actividadPaciente.routes.js";
 import actividadPacienteUploadRoutes from "./routes/actividadPacienteUpload.routes.js";
-
+import pushTestRoutes from "./routes/notificaciones.routes.js"; 
 
 const app = express();
 
@@ -81,7 +81,7 @@ app.use("/api", evidenciasRoutes);
 app.use("/api/notificaciones", notificacionesRoutes);
 app.use("/api/actividades-paciente", actividadPacienteRoutes);
 app.use("/api/upload-actividad", actividadPacienteUploadRoutes); 
-
+app.use("/api", pushTestRoutes);
 
 
 
