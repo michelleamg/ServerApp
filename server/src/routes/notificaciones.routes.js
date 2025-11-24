@@ -7,6 +7,37 @@ import "../controllers/notificaciones.cron.js";
 
 const router = Router();
 
+// 🧪 Endpoint para probar un token manualmente
+router.post("/push/test", async (req, res) => {
+  try {
+    const { token, title, body } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Token es requerido" });
+    }
+
+    console.log("🔍 Probando envío de push manual:");
+    console.log("➡️ Token recibido:", token);
+
+    const resultado = await enviarPush(
+      token,
+      title || "🔔 Test de Push",
+      body || "Este es un mensaje de prueba enviado desde el backend"
+    );
+
+    return res.json({
+      ok: true,
+      tokenEnviado: token,
+      resultado,
+    });
+  } catch (err) {
+    console.error("❌ Error en /push/test:", err);
+    return res.status(500).json({
+      ok: false,
+      error: err.message,
+    });
+  }
+});
 /* ---------------------------------------------
    1. Registrar token
 ----------------------------------------------*/
