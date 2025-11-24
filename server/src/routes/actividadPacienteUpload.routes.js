@@ -15,6 +15,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Cambia esta ruta para usar el controlador correcto
 router.post("/", upload.single("archivo"), async (req, res) => {
   try {
     const { id_paciente, id_actividad, estado } = req.body;
@@ -23,7 +24,8 @@ router.post("/", upload.single("archivo"), async (req, res) => {
       return res.status(400).json({ message: "No se recibió ninguna imagen" });
     }
 
-    const rutaFoto = "/uploads/Actividades/" + req.file.filename;
+    // CORREGIR: La ruta debe coincidir con el destino de multer
+    const rutaFoto = "/uploads/evidencias/" + req.file.filename;
 
     const result = await ActividadPaciente.registrar({
       id_paciente,
@@ -34,10 +36,17 @@ router.post("/", upload.single("archivo"), async (req, res) => {
       evidencia_texto: null
     });
 
-    return res.status(201).json({ message: "Foto guardada", result });
+    return res.status(201).json({ 
+      success: true,  // Agregar esto
+      message: "Foto guardada", 
+      id_actividad_paciente: result.id  // Agregar esto
+    });
   } catch (err) {
     console.error("❌ Error guardando evidencia:", err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ 
+      success: false,  // Agregar esto
+      error: err.message 
+    });
   }
 });
 
