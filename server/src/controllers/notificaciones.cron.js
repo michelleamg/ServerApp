@@ -25,7 +25,10 @@ cron.schedule("* * * * *", async () => {
       [horaActual]
     );
 
+    console.log(`🔍 Encontrados ${rows.length} recordatorios para las ${horaActual}`);
+
     for (let row of rows) {
+      console.log(`📤 Enviando notificación a paciente ${row.id_paciente} con token: ${row.push_token}`);
       await enviarPush(
         row.push_token,
         "🌿 Recordatorio diario",
@@ -35,6 +38,8 @@ cron.schedule("* * * * *", async () => {
 
     if (rows.length > 0) {
       console.log(`🔔 Notificaciones enviadas: ${rows.length} a las ${horaActual}`);
+    } else {
+      console.log(`🔔 No hay notificaciones para enviar a las ${horaActual}`);
     }
   } catch (err) {
     console.error("❌ Error ejecutando CRON:", err);

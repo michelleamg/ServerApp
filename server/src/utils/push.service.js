@@ -1,9 +1,10 @@
 import { Expo } from 'expo-server-sdk';
-
+console.log('🔄 push.service.js - VERSIÓN CORREGIDA CARGADA'); 
 // Crea una instancia de Expo
 const expo = new Expo();
 
 export async function enviarPush(token, title, body) {
+  console.log("🔄 push.service.js - Función enviarPush ejecutándose");
   console.log("-------------------------------------------------");
   console.log("📱 Enviando notificación...");
   console.log("➡️ Token usado:", token);
