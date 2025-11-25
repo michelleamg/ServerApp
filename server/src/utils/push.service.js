@@ -1,6 +1,10 @@
-import axios from "axios";
+import { Expo } from 'expo-server-sdk';
+console.log('🔄 push.service.js - VERSIÓN CORREGIDA CARGADA'); 
+// Crea una instancia de Expo
+const expo = new Expo();
 
 export async function enviarPush(token, title, body) {
+  console.log("🔄 push.service.js - Función enviarPush ejecutándose");
   console.log("-------------------------------------------------");
   console.log("📱 Enviando notificación...");
   console.log("➡️ Token usado:", token);
@@ -10,49 +14,61 @@ export async function enviarPush(token, title, body) {
   if (!token) {
     console.warn("⚠️ No se envió push porque token es null/undefined");
     console.log("-------------------------------------------------");
-    return;
+    return { error: "Token vacío" };
+  }
+
+  // Verifica que el token sea válido
+  if (!Expo.isExpoPushToken(token)) {
+    console.error("❌ Token de Expo inválido:", token);
+    console.log("-------------------------------------------------");
+    return { error: "Token de Expo inválido" };
   }
 
   try {
-    const payload = {
-      to: [token], // ✔️ igual que tu código original
-      title: title || "🌿 Recordatorio",
-      body: body || "No olvides revisar tus actividades 💚",
-      channelId: "default",
+    const message = {
+      to: token, // ✅ CORREGIDO: string individual, NO array
+      sound: 'default',
+      title: title || '🌿 Recordatorio',
+      body: body || 'No olvides revisar tus actividades 💚',
+      data: { 
+        _displayInForeground: true,
+        timestamp: new Date().toISOString()
+      },
     };
 
-    console.log("📦 Payload enviado a Expo:");
-    console.log(JSON.stringify(payload, null, 2));
+    console.log("📦 Payload corregido:");
+    console.log(JSON.stringify(message, null, 2));
 
-    // ---------------------------------------------------------
-    //   👇👇👇 AQUI ESTA LA URL EXACTA QUE TÚ USAS 👇👇👇
-    // ---------------------------------------------------------
-    const response = await axios.post(
-      "https://exp.host/--/api/v2/push/send",
-      payload,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-    // ---------------------------------------------------------
-
-    console.log("📨 Respuesta de Expo:");
-    console.log(JSON.stringify(response.data, null, 2));
-
-    const data = response.data?.data?.[0];
-
-    if (data?.status === "ok") {
-      console.log("✅ Expo aceptó la notificación correctamente");
-    } else {
-      console.log("⚠️ Expo NO aceptó la notificación");
-      if (data?.details?.error) {
-        console.log("❌ Error:", data.details.error);
+    // ✅ Usa el SDK oficial de Expo
+    const chunks = expo.chunkPushNotifications([message]);
+    const tickets = [];
+    
+    for (let chunk of chunks) {
+      try {
+        let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+        console.log('✅ Tickets recibidos:', ticketChunk);
+        tickets.push(...ticketChunk);
+      } catch (error) {
+        console.error('❌ Error en chunk:', error);
       }
     }
 
-  } catch (err) {
-    console.error("🔥 Error enviando push:", err.response?.data || err.message);
-  }
+    // Verifica los resultados
+    if (tickets.length > 0) {
+      const ticket = tickets[0];
+      if (ticket.status === 'ok') {
+        console.log('🎯 Notificación aceptada por Expo');
+      } else if (ticket.status === 'error') {
+        console.error('🚨 Error de Expo:', ticket.details?.error);
+      }
+    }
 
-  console.log("-------------------------------------------------");
+    return { tickets, success: true };
+
+  } catch (error) {
+    console.error('💥 Error crítico enviando push:', error);
+    return { error: error.message };
+  } finally {
+    console.log("-------------------------------------------------");
+  }
 }

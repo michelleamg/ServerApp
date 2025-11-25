@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "expo-server-sdk": "^4.0.0",
     "moment": "^2.30.1",
     "node-fetch": "^3.3.2"
   }

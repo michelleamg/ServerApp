@@ -3,10 +3,9 @@ import cors from "cors";
 import morgan from "morgan";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { createServer } from "http"; // ← Usar HTTP temporalmente
+import { createServer } from "http";
 import { Server } from "socket.io";
 import notificacionesRoutes from "./routes/notificaciones.routes.js";
-
 
 // Importar rutas
 import indexRoutes from "./routes/index.routes.js";
@@ -24,20 +23,19 @@ import evidenciasRoutes from "./routes/evidencia.routes.js";
 import { SocketController } from "./controllers/socketController.js";
 import actividadPacienteRoutes from "./routes/actividadPaciente.routes.js";
 import actividadPacienteUploadRoutes from "./routes/actividadPacienteUpload.routes.js";
-import pushTestRoutes from "./routes/notificaciones.routes.js"; 
 
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ⚙️ Crear servidor HTTP (temporal mientras se reconfigura HTTPS)
+// ⚙️ Crear servidor HTTP
 const httpServer = createServer(app);
 
 // 🔌 Configurar Socket.IO con CORS y transportes compatibles
 export const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Puedes restringir luego a tu dominio móvil
+    origin: "*",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -53,7 +51,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// 🗂️ Servir archivos estáticos (por ejemplo, PDFs o docs públicos)
+// 🗂️ Servir archivos estáticos
 app.use("/docs", express.static(path.join(__dirname, "../public/docs")));
 app.use("/images", express.static(path.join(__dirname, "../public/images")));
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -65,7 +63,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.disable("x-powered-by");
 
-// 🚀 Rutas principales
+// 🚀 Rutas principales (SOLO UNA VEZ notificacionesRoutes)
 app.use("/api", authRoutes);
 app.use("/api", indexRoutes);
 app.use("/api/consentimientos", consentimientoRoutes);
@@ -80,19 +78,14 @@ app.use("/api", recursosRoutes);
 app.use("/api", evidenciasRoutes);
 app.use("/api/notificaciones", notificacionesRoutes);
 app.use("/api/actividades-paciente", actividadPacienteRoutes);
-app.use("/api/upload-actividad", actividadPacienteUploadRoutes); 
-app.use("/api", pushTestRoutes);
+app.use("/api/upload-actividad", actividadPacienteUploadRoutes);
 
-
-
-
-//app.use("/api/notificaciones", notificacionesTestRoutes);
 // 🔍 Ruta de prueba rápida
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong", timestamp: new Date() });
 });
 
-// 🎧 Inicializar el controlador de sockets global (chat, foros, etc.)
+// 🎧 Inicializar el controlador de sockets global
 SocketController.initialize(io);
 
 // ❌ Manejo de rutas no encontradas
