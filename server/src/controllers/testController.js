@@ -36,7 +36,7 @@ export const testController = {
   }
 },
 
-  saveResults: async (req, res) => {
+saveResults: async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
@@ -96,40 +96,40 @@ export const testController = {
     let tipoDuelo, interpretacion, riesgoComplicado;
 
     if (esAltaParte1 && esAltaParte2) {
-      tipoDuelo = "Duelo Prolongado/Crónico";
-      interpretacion = "La respuesta inicial fue intensa y los sentimientos persisten en el presente. Alto riesgo de duelo complicado.";
+      tipoDuelo = "Duelo Prolongado Complejo";
+      interpretacion = "Respuesta inicial intensa y sentimientos persistentes. Alto riesgo de complicaciones.";
       riesgoComplicado = "Alto";
     } else if (!esAltaParte1 && !esAltaParte2) {
-      tipoDuelo = "Duelo Ausente";
-      interpretacion = "La reacción inicial fue baja y el malestar actual también es bajo. Puede indicar un duelo superado o ausencia de reacción.";
+      tipoDuelo = "Duelo Normativo";
+      interpretacion = "Proceso de adaptación dentro de parámetros esperados.";
       riesgoComplicado = "Bajo";
     } else if (esAltaParte1 && !esAltaParte2) {
-      tipoDuelo = "Duelo Agudo/Normal";
-      interpretacion = "La reacción inicial fue intensa, pero ha logrado una adaptación actual a la pérdida. Generalmente se considera un duelo normativo.";
-      riesgoComplicado = "Moderado";
+      tipoDuelo = "Duelo Agudo Resuelto";
+      interpretacion = "Reacción inicial intensa con adaptación posterior satisfactoria.";
+      riesgoComplicado = "Bajo-Moderado";
     } else { // !esAltaParte1 && esAltaParte2
-      tipoDuelo = "Duelo Retardado/Inhibido";
-      interpretacion = "La reacción inicial fue reprimida, pero el dolor se manifiesta intensamente en el presente. Riesgo de duelo complicado.";
+      tipoDuelo = "Duelo Prolongado";
+      interpretacion = "Reacción inicial reprimida con manifestación tardía del dolor.";
       riesgoComplicado = "Moderado-Alto";
     }
 
-    // ✅ GUARDAR RESULTADOS EN LA BD
+    // ✅ GUARDAR RESULTADOS EN LA BD - CORREGIDO
     await connection.query(
       `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion, tipo_resultado, tipo_duelo, riesgo_complicado)
        VALUES (?, ?, ?, 'parte1', ?, ?), 
               (?, ?, ?, 'parte2', ?, ?), 
               (?, ?, ?, 'general', ?, ?)`,
       [
-        // Parte I
+        // Parte I - Interpretación con puntaje
         id_aplicacion, puntajeParte1, `Duelo Agudo: ${puntajeParte1}/40 puntos`, 
         tipoDuelo, riesgoComplicado,
         
-        // Parte II  
+        // Parte II - Interpretación con puntaje  
         id_aplicacion, puntajeParte2, `Duelo Actual: ${puntajeParte2}/65 puntos`,
         tipoDuelo, riesgoComplicado,
         
-        // General
-        id_aplicacion, puntajeTotal, interpretacion,
+        // General - Interpretación con tipo de duelo y explicación
+        id_aplicacion, puntajeTotal, `${tipoDuelo}: ${interpretacion}`,
         tipoDuelo, riesgoComplicado
       ]
     );
@@ -290,22 +290,34 @@ saveFinalTest: async (req, res) => {
       );
     }
 
-    // SUMAR TODAS las respuestas (1–5)
+    // SUMAR TODAS las respuestas (1-5)
     const puntaje_total = answers.reduce(
       (sum, a) => sum + Number(a.value),
       0
     );
 
-    const interpretacion =
-      puntaje_total >= 76 ? "Duelo severo" :
-      puntaje_total >= 46 ? "Duelo moderado" :
-      "Duelo leve";
+    // ✅ CLASIFICACIÓN PROFESIONAL PARA TEST FINAL
+    let tipoDuelo, interpretacion, riesgoComplicado;
 
-    // Guardar resultado
+    if (puntaje_total >= 76) {
+      tipoDuelo = "Duelo Prolongado Complejo";
+      interpretacion = "Presencia de síntomas intensos y persistentes que requieren intervención profesional.";
+      riesgoComplicado = "Alto";
+    } else if (puntaje_total >= 46) {
+      tipoDuelo = "Duelo Prolongado";
+      interpretacion = "Proceso de duelo extendido en el tiempo con dificultades de adaptación.";
+      riesgoComplicado = "Moderado";
+    } else {
+      tipoDuelo = "Duelo Normativo";
+      interpretacion = "Proceso de adaptación dentro de los parámetros esperados.";
+      riesgoComplicado = "Bajo";
+    }
+
+    // ✅ GUARDAR RESULTADO CON TIPO DE DUELO EN INTERPRETACION
     await connection.query(
-      `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion)
-       VALUES (?, ?, ?)`,
-      [id_aplicacion, puntaje_total, interpretacion]
+      `INSERT INTO resultado_test (id_aplicacion, puntaje_total, interpretacion, tipo_duelo, riesgo_complicado)
+       VALUES (?, ?, ?, ?, ?)`,
+      [id_aplicacion, puntaje_total, `${tipoDuelo}: ${interpretacion}`, tipoDuelo, riesgoComplicado]
     );
 
     // Marcar como completado
@@ -321,8 +333,12 @@ saveFinalTest: async (req, res) => {
       success: true,
       message: "Test final guardado",
       id_aplicacion,
-      puntaje_total,
-      interpretacion
+      resultados: {
+        puntaje_total,
+        tipoDuelo,
+        interpretacion,
+        riesgoComplicado
+      }
     });
 
   } catch (error) {
@@ -332,5 +348,4 @@ saveFinalTest: async (req, res) => {
     res.status(500).json({ success: false, error: "Error guardando test final" });
   }
 },
-
 };
