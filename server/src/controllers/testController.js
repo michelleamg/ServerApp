@@ -199,24 +199,22 @@ export const testController = {
   },
 
   // Último resultado
-      getLastResult: async (req, res) => {
-      try {
-        const { id_paciente } = req.params;
-        const result = await Test.getAllResults(id_paciente);
+getLastResult: async (req, res) => {
+  try {
+    const { id_paciente } = req.params;
+    const result = await Test.getAllResults(id_paciente);
 
-        if (!result || result.length === 0) {
-          return res.status(404).json({ success: false, message: "Sin resultados" });
-        }
+    if (!result || result.length === 0) {
+      return res.status(404).json({ success: false, message: "Sin resultados" });
+    }
 
-        // Filtrar solo resultados generales
-        const resultadosGenerales = result.filter(r => r.tipo_resultado === 'general');
-
-        res.json({ success: true, result: resultadosGenerales });
-      } catch (error) {
-        console.error("❌ Error en getLastResult:", error);
-        res.status(500).json({ success: false });
-      }
-    },
+    // ✅ DEVOLVER TODOS los resultados, no solo los generales
+    res.json({ success: true, result: result });
+  } catch (error) {
+    console.error("❌ Error en getLastResult:", error);
+    res.status(500).json({ success: false });
+  }
+},
 
   getQuestionsByTest: async (req, res) => {
     try {
