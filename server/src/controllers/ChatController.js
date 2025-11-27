@@ -84,15 +84,46 @@ export const ChatController = {
   },
 
   async hayNuevosMensajes(req, res) {
-    const { id_chat, lastId } = req.query;
-    
-    const ultimoMensaje = await ChatModel.getUltimoMensaje(id_chat);
-    const hayNuevos = ultimoMensaje.id_mensaje > parseInt(lastId);
-    
-    res.json({ 
-      hayNuevos, 
-      ultimoId: ultimoMensaje.id_mensaje,
-      cantidad: hayNuevos ? ultimoMensaje.id_mensaje - parseInt(lastId) : 0
-    });
+    try {
+      const { id_chat, lastId } = req.query;
+
+      if (!id_chat || !lastId) {
+        return res.json({
+          hayNuevos: false,
+          ultimoId: null,
+          cantidad: 0
+        });
+      }
+
+      const ultimoMensaje = await ChatModel.getUltimoMensaje(id_chat);
+
+      // 🎯 Si NO hay mensajes aún
+      if (!ultimoMensaje || !ultimoMensaje.id_mensaje) {
+        return res.json({
+          hayNuevos: false,
+          ultimoId: null,
+          cantidad: 0
+        });
+      }
+
+      const ultimoId = ultimoMensaje.id_mensaje;
+      const lastSeen = parseInt(lastId);
+
+      const hayNuevos = ultimoId > lastSeen;
+
+      return res.json({
+        hayNuevos,
+        ultimoId,
+        cantidad: hayNuevos ? (ultimoId - lastSeen) : 0
+      });
+
+    } catch (error) {
+      console.error("❌ Error en hayNuevosMensajes:", error);
+      return res.status(500).json({
+        error: "Error en hayNuevosMensajes",
+        detalles: error.message
+      });
+    }
   }
+
 };
