@@ -130,94 +130,95 @@ export const AgendaController = {
      🆕 4️⃣ Solicitar nueva cita (registrar cita como pendiente)
      ======================================================== */
   async solicitarCita(req, res) {
-    try {
-      const { id_paciente, fecha, hora_inicio, hora_fin, modalidad } = req.body;
+  try {
+    const { id_paciente, fecha, hora_inicio, hora_fin, modalidad } = req.body;
 
-      if (!id_paciente || !fecha || !hora_inicio || !hora_fin) {
-        return res.status(400).json({ message: "Faltan campos requeridos" });
-      }
-
-      // 1️⃣ Buscar psicólogo asociado al paciente
-      const [pacienteRows] = await pool.query(
-        "SELECT id_psicologo FROM paciente WHERE id_paciente = ? LIMIT 1",
-        [id_paciente]
-      );
-
-      if (pacienteRows.length === 0) {
-        return res.status(404).json({ message: "Paciente no encontrado" });
-      }
-
-      const id_psicologo = pacienteRows[0].id_psicologo;
-
-      // 🆕 2️⃣ VALIDAR QUE NO HAYA CONFLICTO DE HORARIO
-      const [citasConflicto] = await pool.query(
-        `SELECT COUNT(*) as conflictos
-        FROM cita c
-        INNER JOIN agenda a ON c.id_agenda = a.id_agenda
-        WHERE a.id_psicologo = ?
-          AND c.fecha = ?
-          AND c.estado IN ('confirmada', 'pendiente')
-          AND c.hora_inicio = ?`,
-        [id_psicologo, fecha, hora_inicio]
-      );
-
-      if (citasConflicto[0].conflictos > 0) {
-        return res.status(409).json({ 
-          message: "El horario seleccionado ya no está disponible. Por favor elige otro." 
-        });
-      }
-
-      // 3️⃣ Buscar o crear agenda activa del psicólogo
-      const [agendaRows] = await pool.query(
-        `SELECT id_agenda 
-        FROM agenda 
-        WHERE id_psicologo = ?
-          AND ? BETWEEN semana_inicio AND semana_fin
-        LIMIT 1`,
-        [id_psicologo, fecha]
-      );
-
-      let id_agenda;
-      if (agendaRows.length === 0) {
-        const semanaInicio = moment(fecha).startOf("isoWeek").format("YYYY-MM-DD");
-        const semanaFin = moment(fecha).endOf("isoWeek").format("YYYY-MM-DD");
-
-        const [nuevaAgenda] = await pool.query(
-          `INSERT INTO agenda (id_psicologo, semana_inicio, semana_fin)
-          VALUES (?, ?, ?)`,
-          [id_psicologo, semanaInicio, semanaFin]
-        );
-        id_agenda = nuevaAgenda.insertId;
-      } else {
-        id_agenda = agendaRows[0].id_agenda;
-      }
-
-      // 4️⃣ Insertar nueva cita como pendiente
-      const [result] = await pool.query(
-        `INSERT INTO cita (id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad, estado)
-        VALUES (?, ?, ?, ?, ?, ?, 'pendiente')`,
-        [id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad || "En línea"]
-      );
-
-      // 🆕 5️⃣ Emitir evento Socket.IO
-      io.emit(`nueva-solicitud-${id_psicologo}`, {
-        id_cita: result.insertId,
-        id_paciente,
-        fecha,
-        hora_inicio,
-        modalidad
-      });
-
-      res.status(201).json({
-        message: "Cita solicitada con éxito. Espera confirmación del psicólogo.",
-        id_cita: result.insertId,
-        id_agenda,
-      });
-    } catch (error) {
-      console.error("❌ Error al solicitar cita:", error);
-      res.status(500).json({ message: "Error al solicitar cita", error });
+    if (!id_paciente || !fecha || !hora_inicio || !hora_fin) {
+      return res.status(400).json({ message: "Faltan campos requeridos" });
     }
-  },
+
+    // 1️⃣ Buscar psicólogo asociado al paciente
+    const [pacienteRows] = await pool.query(
+      "SELECT id_psicologo FROM paciente WHERE id_paciente = ? LIMIT 1",
+      [id_paciente]
+    );
+
+    if (pacienteRows.length === 0) {
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+
+    const id_psicologo = pacienteRows[0].id_psicologo;
+
+    // 🆕 2️⃣ VALIDAR QUE NO HAYA CONFLICTO DE HORARIO
+    const [citasConflicto] = await pool.query(
+      `SELECT COUNT(*) as conflictos
+      FROM cita c
+      INNER JOIN agenda a ON c.id_agenda = a.id_agenda
+      WHERE a.id_psicologo = ?
+        AND c.fecha = ?
+        AND c.estado IN ('confirmada', 'pendiente')
+        AND c.hora_inicio = ?`,
+      [id_psicologo, fecha, hora_inicio]
+    );
+
+    if (citasConflicto[0].conflictos > 0) {
+      return res.status(409).json({ 
+        message: "El horario seleccionado ya no está disponible. Por favor elige otro." 
+      });
+    }
+
+    // 3️⃣ Buscar o crear agenda activa del psicólogo
+    const [agendaRows] = await pool.query(
+      `SELECT id_agenda 
+      FROM agenda 
+      WHERE id_psicologo = ?
+        AND ? BETWEEN semana_inicio AND semana_fin
+      LIMIT 1`,
+      [id_psicologo, fecha]
+    );
+
+    let id_agenda;
+    if (agendaRows.length === 0) {
+      const semanaInicio = moment(fecha).startOf("isoWeek").format("YYYY-MM-DD");
+      const semanaFin = moment(fecha).endOf("isoWeek").format("YYYY-MM-DD");
+      
+      // 🆕 AGREGAR createdAt CON LA FECHA ACTUAL
+      const [nuevaAgenda] = await pool.query(
+        `INSERT INTO agenda (id_psicologo, semana_inicio, semana_fin, createdAt)
+        VALUES (?, ?, ?, NOW())`, // 🆕 Usar NOW() para la fecha actual
+        [id_psicologo, semanaInicio, semanaFin]
+      );
+      id_agenda = nuevaAgenda.insertId;
+    } else {
+      id_agenda = agendaRows[0].id_agenda;
+    }
+
+    // 4️⃣ Insertar nueva cita como pendiente
+    const [result] = await pool.query(
+      `INSERT INTO cita (id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad, estado)
+      VALUES (?, ?, ?, ?, ?, ?, 'pendiente')`,
+      [id_agenda, id_paciente, fecha, hora_inicio, hora_fin, modalidad || "En línea"]
+    );
+
+    // 🆕 5️⃣ Emitir evento Socket.IO
+    io.emit(`nueva-solicitud-${id_psicologo}`, {
+      id_cita: result.insertId,
+      id_paciente,
+      fecha,
+      hora_inicio,
+      modalidad
+    });
+
+    res.status(201).json({
+      message: "Cita solicitada con éxito. Espera confirmación del psicólogo.",
+      id_cita: result.insertId,
+      id_agenda,
+    });
+  } catch (error) {
+    console.error("❌ Error al solicitar cita:", error);
+    res.status(500).json({ message: "Error al solicitar cita", error });
+  }
+},
   /* ========================================================
    🕐 5️⃣ Obtener horarios disponibles para una fecha específica
    ======================================================== */
