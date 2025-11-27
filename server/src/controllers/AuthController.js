@@ -213,6 +213,20 @@ export const AuthController = {
   // ============================================================
   async verifyToken(req, res, next) {
     try {
+      // Rutas públicas: NO deben pedir token
+      const rutasPublicas = [
+        "/api/login",
+        "/api/register",
+        "/api/recover-password",
+        "/api/reset-password",
+        "/api/verify/send",
+        "/api/verify"
+      ];
+      // Si la ruta actual es una pública, permitir acceso sin token
+      if (rutasPublicas.some(r => req.path.startsWith(r))) {
+        return next();
+      }
+      // Rutas protegidas sí requieren token
       const token = req.headers.authorization?.split(" ")[1];
       if (!token) {
         return res.status(401).json({ message: "Token no proporcionado" });
