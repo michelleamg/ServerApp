@@ -112,7 +112,7 @@ export const ChatController = {
       const hayNuevos = ultimoId > lastSeen;
 
       return res.json({
-        hayNuevos,
+        hayNuevos, // ✅ Cambiado de 'nuevo' a 'hayNuevos'
         ultimoId,
         cantidad: hayNuevos ? (ultimoId - lastSeen) : 0
       });
