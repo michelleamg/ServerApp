@@ -8,9 +8,19 @@ export const ForoMensajeModel = {
 
       const [rows] = await pool.query(
         `SELECT 
-          mf.id_mensaje_foro, mf.id_tema, mf.tipo_usuario, mf.id_paciente, mf.id_psicologo, mf.contenido, mf.fecha_envio,
-          p.nombre AS paciente_nombre, p.apellido_paterno AS paciente_ap, p.apellido_materno AS paciente_am,
-          ps.nombre AS psicologo_nombre, ps.apellidoPaterno AS psicologo_ap, ps.apellidoMaterno AS psicologo_am
+          mf.id_mensaje_foro, 
+          mf.id_tema, 
+          mf.tipo_usuario, 
+          mf.id_paciente, 
+          mf.id_psicologo, 
+          mf.contenido, 
+          mf.fecha_envio,
+          p.nombre AS paciente_nombre, 
+          p.apellido_paterno AS paciente_ap, 
+          p.apellido_materno AS paciente_am,
+          ps.nombre AS psicologo_nombre, 
+          ps.apellidoPaterno AS psicologo_ap, 
+          ps.apellidoMaterno AS psicologo_am
         FROM mensaje_foro mf
         LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
         LEFT JOIN psicologo ps ON ps.id_psicologo = mf.id_psicologo
@@ -67,9 +77,19 @@ export const ForoMensajeModel = {
       );
 
       const [msg] = await pool.query(
-        `SELECT mf.id_mensaje_foro, mf.id_tema, mf.tipo_usuario, mf.id_paciente, mf.id_psicologo, mf.fecha_envio,
-          p.nombre AS paciente_nombre, p.apellido_paterno AS paciente_ap, p.apellido_materno AS paciente_am,
-          ps.nombre AS psicologo_nombre, ps.apellidoPaterno AS psicologo_ap, ps.apellidoMaterno AS psicologo_am
+        `SELECT 
+          mf.id_mensaje_foro, 
+          mf.id_tema, 
+          mf.tipo_usuario, 
+          mf.id_paciente, 
+          mf.id_psicologo, 
+          mf.fecha_envio,
+          p.nombre AS paciente_nombre, 
+          p.apellido_paterno AS paciente_ap, 
+          p.apellido_materno AS paciente_am,
+          ps.nombre AS psicologo_nombre, 
+          ps.apellidoPaterno AS psicologo_ap, 
+          ps.apellidoMaterno AS psicologo_am
         FROM mensaje_foro mf
         LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
         LEFT JOIN psicologo ps ON ps.id_psicologo = mf.id_psicologo
