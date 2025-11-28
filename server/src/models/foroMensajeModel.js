@@ -20,8 +20,8 @@ export const ForoMensajeModel = {
           p.apellido_paterno AS paciente_apellido_paterno,
           p.apellido_materno AS paciente_apellido_materno,
           ps.nombre AS psicologo_nombre,
-          ps.apellido_paterno AS psicologo_apellido_paterno,
-          ps.apellido_materno AS psicologo_apellido_materno
+          ps.apellidoPaterno AS psicologo_apellido_paterno,
+          ps.apellidoMaterno AS psicologo_apellido_materno
         FROM mensaje_foro mf
         LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
         LEFT JOIN psicologo ps ON ps.id_psicologo = mf.id_psicologo
@@ -57,12 +57,12 @@ export const ForoMensajeModel = {
           const apellidos = [msg.paciente_apellido_paterno, msg.paciente_apellido_materno]
             .filter(Boolean)
             .join(' ');
-          autorNombre = `${msg.paciente_nombre} ${apellidos}`.trim();
+          autorNombre = apellidos ? `${msg.paciente_nombre} ${apellidos}` : msg.paciente_nombre;
         } else if (msg.tipo_usuario === 'psicologo' && msg.psicologo_nombre) {
           const apellidos = [msg.psicologo_apellido_paterno, msg.psicologo_apellido_materno]
             .filter(Boolean)
             .join(' ');
-          autorNombre = `${msg.psicologo_nombre} ${apellidos}`.trim();
+          autorNombre = apellidos ? `${msg.psicologo_nombre} ${apellidos}` : msg.psicologo_nombre;
         }
 
         return {
@@ -77,12 +77,11 @@ export const ForoMensajeModel = {
         };
       });
 
-      console.log(`✅ Mensajes procesados exitosamente: ${mensajesProcesados.length}`);
+      console.log(`✅ Mensajes procesados: ${mensajesProcesados.length}`);
       return mensajesProcesados;
 
     } catch (error) {
-      console.error("❌ ERROR CRÍTICO en ForoMensajeModel.getByTema:");
-      console.error("   Tema ID:", id_tema);
+      console.error("❌ ERROR en ForoMensajeModel.getByTema:");
       console.error("   Error:", error.message);
       throw error;
     }
@@ -90,16 +89,14 @@ export const ForoMensajeModel = {
 
   async create({ id_tema, tipo_usuario, id_paciente, id_psicologo, contenido }) {
     try {
-      console.log("📤 ForoMensajeModel - Creando mensaje:", { id_tema, tipo_usuario });
-
       if (!id_tema || !tipo_usuario || !contenido?.trim()) {
-        throw new Error("Faltan parámetros requeridos");
+        throw new Error("Faltan parámetros");
       }
 
       let contenidoCifrado;
       try {
         contenidoCifrado = encryptMessage(contenido);
-      } catch (encryptErr) {
+      } catch {
         contenidoCifrado = contenido;
       }
 
@@ -109,13 +106,10 @@ export const ForoMensajeModel = {
         [id_tema, tipo_usuario, tipo_usuario === 'paciente' ? id_paciente : null, tipo_usuario === 'psicologo' ? id_psicologo : null, contenidoCifrado]
       );
 
-      console.log("✅ Mensaje insertado con ID:", res.insertId);
-
       const [newMessage] = await pool.query(
-        `SELECT 
-          mf.id_mensaje_foro, mf.id_tema, mf.tipo_usuario, mf.id_paciente, mf.id_psicologo, mf.fecha_envio,
+        `SELECT mf.id_mensaje_foro, mf.id_tema, mf.tipo_usuario, mf.id_paciente, mf.id_psicologo, mf.fecha_envio,
           p.nombre AS paciente_nombre, p.apellido_paterno AS paciente_apellido_paterno, p.apellido_materno AS paciente_apellido_materno,
-          ps.nombre AS psicologo_nombre, ps.apellido_paterno AS psicologo_apellido_paterno, ps.apellido_materno AS psicologo_apellido_materno
+          ps.nombre AS psicologo_nombre, ps.apellidoPaterno AS psicologo_apellido_paterno, ps.apellidoMaterno AS psicologo_apellido_materno
         FROM mensaje_foro mf
         LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
         LEFT JOIN psicologo ps ON ps.id_psicologo = mf.id_psicologo
@@ -124,14 +118,13 @@ export const ForoMensajeModel = {
       );
 
       const mensaje = newMessage[0];
-
       let autorNombre = 'Usuario';
       if (mensaje.tipo_usuario === 'paciente' && mensaje.paciente_nombre) {
         const apellidos = [mensaje.paciente_apellido_paterno, mensaje.paciente_apellido_materno].filter(Boolean).join(' ');
-        autorNombre = `${mensaje.paciente_nombre} ${apellidos}`.trim();
+        autorNombre = apellidos ? `${mensaje.paciente_nombre} ${apellidos}` : mensaje.paciente_nombre;
       } else if (mensaje.tipo_usuario === 'psicologo' && mensaje.psicologo_nombre) {
         const apellidos = [mensaje.psicologo_apellido_paterno, mensaje.psicologo_apellido_materno].filter(Boolean).join(' ');
-        autorNombre = `${mensaje.psicologo_nombre} ${apellidos}`.trim();
+        autorNombre = apellidos ? `${mensaje.psicologo_nombre} ${apellidos}` : mensaje.psicologo_nombre;
       }
 
       return {
@@ -146,7 +139,7 @@ export const ForoMensajeModel = {
       };
 
     } catch (error) {
-      console.error("❌ ERROR CRÍTICO en ForoMensajeModel.create:", error.message);
+      console.error("❌ ERROR en create:", error.message);
       throw error;
     }
   },
