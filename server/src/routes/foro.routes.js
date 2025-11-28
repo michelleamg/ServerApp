@@ -10,6 +10,7 @@ router.get("/", ForoController.getForos);
 router.get("/:id_foro", ForoController.getForoDetalle); // ✅ foro detalle
 router.get("/:id_foro/temas", ForoController.getTemas);
 router.post("/:id_foro/unirse", ForoController.unirseForo);
+router.get("/:id_foro/check-joined", ForoController.checkJoinedForo); // ✅ Nueva ruta para verificar unión
 
 // ✅ Mensajes de un tema
 router.get("/temas/:id_tema/mensajes", ForoMensajeController.getMensajes);

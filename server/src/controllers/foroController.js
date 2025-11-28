@@ -211,6 +211,33 @@ export const ForoController = {
       });
     }
   },
+  // ForoController.js
+  async checkJoinedForo(req, res) {
+    try {
+      const { id_foro } = req.params;
+      const { id_paciente } = req.query;
+
+      if (!id_paciente) {
+        return res.status(400).json({ message: "Falta id_paciente" });
+      }
+
+      // Verificar en la base de datos si el paciente está unido al foro
+      const [rows] = await pool.query(
+        `SELECT 1 AS unido 
+        FROM foro_participante 
+        WHERE id_foro = ? AND id_paciente = ?`,
+        [id_foro, id_paciente]
+      );
+
+      const estaUnido = rows.length > 0;
+
+      return res.status(200).json({ esta_unido: estaUnido });
+    } catch (error) {
+      console.error("❌ Error en checkJoinedForo:", error);
+      return res.status(500).json({ message: "Error interno del servidor" });
+    }
+  },
+  
   // 🔹 Unirse a un foro
     async unirseForo(req, res) {
       try {
