@@ -87,6 +87,8 @@ export const ChatController = {
     try {
       const { id_chat, lastId } = req.query;
 
+      console.log(`🔍 Verificando nuevos mensajes - Chat: ${id_chat}, LastID: ${lastId}`);
+
       if (!id_chat || !lastId) {
         return res.json({
           hayNuevos: false,
@@ -97,7 +99,7 @@ export const ChatController = {
 
       const ultimoMensaje = await ChatModel.getUltimoMensaje(id_chat);
 
-      // 🎯 Si NO hay mensajes aún
+      // Si NO hay mensajes aún
       if (!ultimoMensaje || !ultimoMensaje.id_mensaje) {
         return res.json({
           hayNuevos: false,
@@ -109,10 +111,12 @@ export const ChatController = {
       const ultimoId = ultimoMensaje.id_mensaje;
       const lastSeen = parseInt(lastId);
 
+      console.log(`📊 Comparando - Último en BD: ${ultimoId}, LastSeen: ${lastSeen}`);
+
       const hayNuevos = ultimoId > lastSeen;
 
       return res.json({
-        hayNuevos, // ✅ Cambiado de 'nuevo' a 'hayNuevos'
+        hayNuevos, // ✅ Campo corregido
         ultimoId,
         cantidad: hayNuevos ? (ultimoId - lastSeen) : 0
       });
