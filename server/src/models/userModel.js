@@ -147,5 +147,18 @@ User.clearSessionToken = async (id_paciente) => {
   return true;
 };
 
+// userModel.js - agregar este método
+User.findById = async (id_paciente) => {
+  const sql = `
+    SELECT id_paciente, nombre, apellido_paterno, apellido_materno, email, 
+           telefono, id_psicologo, session_token, email_verificado
+    FROM paciente
+    WHERE id_paciente = ?
+    LIMIT 1
+  `;
+  const [rows] = await pool.query(sql, [id_paciente]);
+  return rows[0] || null;
+};
+
 
 export default User;

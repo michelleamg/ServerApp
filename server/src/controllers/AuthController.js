@@ -471,4 +471,78 @@ export const AuthController = {
           return res.status(500).json({ message: "Error al cerrar sesión", error: error.message });
         }
       },
+
+      // AuthController.js - agregar este método
+async verifyTokenEndpoint(req, res) {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ 
+        isValid: false, 
+        message: "Token no proporcionado" 
+      });
+    }
+
+    // Verificar token JWT
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "d98!ae4h4UBh5hUguiPY59"
+    );
+
+    // Buscar usuario en BD
+    const user = await User.findById(decoded.sub);
+    if (!user) {
+      return res.status(401).json({ 
+        isValid: false, 
+        message: "Usuario no encontrado" 
+      });
+    }
+
+    // Verificar que el session_token coincida
+    if (user.session_token !== token) {
+      return res.status(401).json({ 
+        isValid: false, 
+        message: "Token de sesión inválido" 
+      });
+    }
+
+      // Token válido - devolver datos del usuario
+      const consent = await User.findConsentimientos(user.id_paciente);
+
+      return res.status(200).json({
+        isValid: true,
+        user: {
+          id_paciente: user.id_paciente,
+          nombre: user.nombre,
+          email: user.email,
+          aviso_privacidad: consent?.aviso_privacidad || 0,
+          terminos_condiciones: consent?.terminos_condiciones || 0,
+          session_token: user.session_token,
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ Error en verifyTokenEndpoint:", error);
+      
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          isValid: false, 
+          message: "Token expirado" 
+        });
+      }
+      
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({ 
+          isValid: false, 
+          message: "Token inválido" 
+        });
+      }
+
+      return res.status(500).json({ 
+        isValid: false, 
+        message: "Error del servidor" 
+      });
+    }
+}
 };
