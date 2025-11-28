@@ -4,65 +4,36 @@ import { encryptMessage, decryptMessage } from "../utils/cryptoUtils.js";
 export const ForoMensajeModel = {
   async getByTema(id_tema) {
     try {
-      console.log("🔍 ForoMensajeModel - Consultando mensajes del tema:", id_tema);
+      console.log("🔍 Consultando tema:", id_tema);
 
       const [rows] = await pool.query(
-        `
-        SELECT 
-          mf.id_mensaje_foro,
-          mf.id_tema,
-          mf.tipo_usuario,
-          mf.id_paciente,
-          mf.id_psicologo,
-          mf.contenido,
-          mf.fecha_envio,
-          p.nombre AS paciente_nombre,
-          p.apellido_paterno AS paciente_apellido_paterno,
-          p.apellido_materno AS paciente_apellido_materno,
-          ps.nombre AS psicologo_nombre,
-          ps.apellidoPaterno AS psicologo_apellido_paterno,
-          ps.apellidoMaterno AS psicologo_apellido_materno
+        `SELECT 
+          mf.id_mensaje_foro, mf.id_tema, mf.tipo_usuario, mf.id_paciente, mf.id_psicologo, mf.contenido, mf.fecha_envio,
+          p.nombre AS paciente_nombre, p.apellido_paterno AS paciente_ap, p.apellido_materno AS paciente_am,
+          ps.nombre AS psicologo_nombre, ps.apellidoPaterno AS psicologo_ap, ps.apellidoMaterno AS psicologo_am
         FROM mensaje_foro mf
         LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
         LEFT JOIN psicologo ps ON ps.id_psicologo = mf.id_psicologo
         WHERE mf.id_tema = ?
-        ORDER BY mf.fecha_envio ASC
-        `,
+        ORDER BY mf.fecha_envio ASC`,
         [id_tema]
       );
 
-      console.log(`✅ Consulta exitosa - Encontrados ${rows.length} mensajes`);
+      console.log(`✅ Encontrados ${rows.length} mensajes`);
 
-      const mensajesProcesados = rows.map((msg) => {
-        let contenidoDescifrado = "[Mensaje ilegible]";
-        
+      return rows.map((msg) => {
+        let contenido = msg.contenido || "";
         try {
-          const texto = msg.contenido || "";
-          if (texto && texto.includes(":")) {
-            try {
-              contenidoDescifrado = decryptMessage(texto);
-            } catch (decryptErr) {
-              contenidoDescifrado = texto;
-            }
-          } else {
-            contenidoDescifrado = texto || "[Mensaje vacío]";
-          }
-        } catch (err) {
-          contenidoDescifrado = msg.contenido || "[Mensaje ilegible]";
-        }
+          if (contenido.includes(":")) contenido = decryptMessage(contenido);
+        } catch {}
 
-        // Construir nombre completo
-        let autorNombre = 'Usuario';
+        let nombre = 'Usuario';
         if (msg.tipo_usuario === 'paciente' && msg.paciente_nombre) {
-          const apellidos = [msg.paciente_apellido_paterno, msg.paciente_apellido_materno]
-            .filter(Boolean)
-            .join(' ');
-          autorNombre = apellidos ? `${msg.paciente_nombre} ${apellidos}` : msg.paciente_nombre;
+          const ap = [msg.paciente_ap, msg.paciente_am].filter(Boolean).join(' ');
+          nombre = ap ? `${msg.paciente_nombre} ${ap}` : msg.paciente_nombre;
         } else if (msg.tipo_usuario === 'psicologo' && msg.psicologo_nombre) {
-          const apellidos = [msg.psicologo_apellido_paterno, msg.psicologo_apellido_materno]
-            .filter(Boolean)
-            .join(' ');
-          autorNombre = apellidos ? `${msg.psicologo_nombre} ${apellidos}` : msg.psicologo_nombre;
+          const ap = [msg.psicologo_ap, msg.psicologo_am].filter(Boolean).join(' ');
+          nombre = ap ? `${msg.psicologo_nombre} ${ap}` : msg.psicologo_nombre;
         }
 
         return {
@@ -71,45 +42,34 @@ export const ForoMensajeModel = {
           id_paciente: msg.id_paciente,
           id_psicologo: msg.id_psicologo,
           tipo_usuario: msg.tipo_usuario || 'paciente',
-          contenido: contenidoDescifrado,
+          contenido,
           fecha_creacion: msg.fecha_envio,
-          autor_nombre: autorNombre,
+          autor_nombre: nombre,
         };
       });
-
-      console.log(`✅ Mensajes procesados: ${mensajesProcesados.length}`);
-      return mensajesProcesados;
-
     } catch (error) {
-      console.error("❌ ERROR en ForoMensajeModel.getByTema:");
-      console.error("   Error:", error.message);
+      console.error("❌ ERROR:", error.message);
       throw error;
     }
   },
 
   async create({ id_tema, tipo_usuario, id_paciente, id_psicologo, contenido }) {
     try {
-      if (!id_tema || !tipo_usuario || !contenido?.trim()) {
-        throw new Error("Faltan parámetros");
-      }
+      if (!id_tema || !tipo_usuario || !contenido?.trim()) throw new Error("Faltan parámetros");
 
-      let contenidoCifrado;
-      try {
-        contenidoCifrado = encryptMessage(contenido);
-      } catch {
-        contenidoCifrado = contenido;
-      }
+      let cifrado = contenido;
+      try { cifrado = encryptMessage(contenido); } catch {}
 
       const [res] = await pool.query(
         `INSERT INTO mensaje_foro (id_tema, tipo_usuario, id_paciente, id_psicologo, contenido, fecha_envio)
          VALUES (?, ?, ?, ?, ?, NOW())`,
-        [id_tema, tipo_usuario, tipo_usuario === 'paciente' ? id_paciente : null, tipo_usuario === 'psicologo' ? id_psicologo : null, contenidoCifrado]
+        [id_tema, tipo_usuario, tipo_usuario === 'paciente' ? id_paciente : null, tipo_usuario === 'psicologo' ? id_psicologo : null, cifrado]
       );
 
-      const [newMessage] = await pool.query(
+      const [msg] = await pool.query(
         `SELECT mf.id_mensaje_foro, mf.id_tema, mf.tipo_usuario, mf.id_paciente, mf.id_psicologo, mf.fecha_envio,
-          p.nombre AS paciente_nombre, p.apellido_paterno AS paciente_apellido_paterno, p.apellido_materno AS paciente_apellido_materno,
-          ps.nombre AS psicologo_nombre, ps.apellidoPaterno AS psicologo_apellido_paterno, ps.apellidoMaterno AS psicologo_apellido_materno
+          p.nombre AS paciente_nombre, p.apellido_paterno AS paciente_ap, p.apellido_materno AS paciente_am,
+          ps.nombre AS psicologo_nombre, ps.apellidoPaterno AS psicologo_ap, ps.apellidoMaterno AS psicologo_am
         FROM mensaje_foro mf
         LEFT JOIN paciente p ON p.id_paciente = mf.id_paciente
         LEFT JOIN psicologo ps ON ps.id_psicologo = mf.id_psicologo
@@ -117,29 +77,28 @@ export const ForoMensajeModel = {
         [res.insertId]
       );
 
-      const mensaje = newMessage[0];
-      let autorNombre = 'Usuario';
-      if (mensaje.tipo_usuario === 'paciente' && mensaje.paciente_nombre) {
-        const apellidos = [mensaje.paciente_apellido_paterno, mensaje.paciente_apellido_materno].filter(Boolean).join(' ');
-        autorNombre = apellidos ? `${mensaje.paciente_nombre} ${apellidos}` : mensaje.paciente_nombre;
-      } else if (mensaje.tipo_usuario === 'psicologo' && mensaje.psicologo_nombre) {
-        const apellidos = [mensaje.psicologo_apellido_paterno, mensaje.psicologo_apellido_materno].filter(Boolean).join(' ');
-        autorNombre = apellidos ? `${mensaje.psicologo_nombre} ${apellidos}` : mensaje.psicologo_nombre;
+      const m = msg[0];
+      let nombre = 'Usuario';
+      if (m.tipo_usuario === 'paciente' && m.paciente_nombre) {
+        const ap = [m.paciente_ap, m.paciente_am].filter(Boolean).join(' ');
+        nombre = ap ? `${m.paciente_nombre} ${ap}` : m.paciente_nombre;
+      } else if (m.tipo_usuario === 'psicologo' && m.psicologo_nombre) {
+        const ap = [m.psicologo_ap, m.psicologo_am].filter(Boolean).join(' ');
+        nombre = ap ? `${m.psicologo_nombre} ${ap}` : m.psicologo_nombre;
       }
 
       return {
-        id_mensaje: mensaje.id_mensaje_foro,
-        id_tema: mensaje.id_tema,
-        tipo_usuario: mensaje.tipo_usuario,
-        id_paciente: mensaje.id_paciente,
-        id_psicologo: mensaje.id_psicologo,
-        contenido: contenido,
-        fecha_creacion: mensaje.fecha_envio,
-        autor_nombre: autorNombre,
+        id_mensaje: m.id_mensaje_foro,
+        id_tema: m.id_tema,
+        tipo_usuario: m.tipo_usuario,
+        id_paciente: m.id_paciente,
+        id_psicologo: m.id_psicologo,
+        contenido,
+        fecha_creacion: m.fecha_envio,
+        autor_nombre: nombre,
       };
-
     } catch (error) {
-      console.error("❌ ERROR en create:", error.message);
+      console.error("❌ ERROR:", error.message);
       throw error;
     }
   },
