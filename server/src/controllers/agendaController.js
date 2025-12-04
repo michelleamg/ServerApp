@@ -11,75 +11,86 @@ export const AgendaController = {
       const { id_paciente } = req.params;
 
       // 1️⃣ Buscar el psicólogo asociado al paciente
-      const [pacienteRows] = await pool.query(
+      const [[paciente]] = await pool.query(
         "SELECT id_psicologo FROM paciente WHERE id_paciente = ? LIMIT 1",
         [id_paciente]
       );
 
-      if (pacienteRows.length === 0) {
+      if (!paciente) {
         return res.status(404).json({ message: "Paciente no encontrado" });
       }
 
-      const id_psicologo = pacienteRows[0].id_psicologo;
+      const id_psicologo = paciente.id_psicologo;
       if (!id_psicologo) {
         return res
           .status(404)
           .json({ message: "El paciente no tiene psicólogo asignado" });
       }
 
-      // 2️⃣ Calcular el primer lunes del mes actual y limitar a 5 semanas
+      // 2️⃣ Calcular semanas (igual que tu código)
       const primerLunes = moment().startOf("month").startOf("isoWeek");
+
+      // 3️⃣ ❗ Nueva consulta única: traer TODO el mes
+      const [citasMes] = await pool.query(
+        `
+        SELECT 
+          c.id_cita,
+          DATE_FORMAT(c.fecha, '%Y-%m-%d') AS fecha,
+          c.hora_inicio,
+          c.hora_fin,
+          c.modalidad,
+          c.estado
+        FROM cita c
+        INNER JOIN agenda a ON c.id_agenda = a.id_agenda
+        WHERE a.id_psicologo = ?
+          AND c.id_paciente = ?
+          AND MONTH(c.fecha) = MONTH(CURDATE())
+          AND YEAR(c.fecha) = YEAR(CURDATE())
+        ORDER BY c.fecha ASC, c.hora_inicio ASC
+        `,
+        [id_psicologo, id_paciente]
+      );
+
+      // 4️⃣ Armar semanas con la MISMA lógica que ya tienes
       const semanas = [];
+      const ahora = moment();
 
       for (let i = 0; i < 5; i++) {
         const semanaInicio = primerLunes.clone().add(i, "weeks");
         const semanaFin = semanaInicio.clone().add(6, "days");
 
-        // 3️⃣ Traer SOLO las citas del paciente actual
-        const [citas] = await pool.query(
-          `SELECT 
-              c.id_cita,
-              DATE_FORMAT(c.fecha, '%Y-%m-%d') as fecha,
-              c.hora_inicio,
-              c.hora_fin,
-              c.modalidad,
-              c.estado
-            FROM cita c
-            INNER JOIN agenda a ON c.id_agenda = a.id_agenda
-            WHERE a.id_psicologo = ?
-              AND c.id_paciente = ?
-              AND c.fecha BETWEEN ? AND ?
-            ORDER BY c.fecha, c.hora_inicio`,
-          [
-            id_psicologo,
-            id_paciente,
+        // 🆗 Filtrar citas (equivalente a tu query con BETWEEN)
+        const citasSemana = citasMes.filter(c =>
+          moment(c.fecha).isBetween(
             semanaInicio.format("YYYY-MM-DD"),
             semanaFin.format("YYYY-MM-DD"),
-          ]
+            undefined,
+            "[]"
+          )
         );
 
-        // 4️⃣ Agregar estado visual según la fecha actual
-        const ahora = moment();
-        const citasConEstado = citas.map((cita) => {
+        // 🔵 MISMA lógica de estado_visual
+        const citasConEstado = citasSemana.map(cita => {
           const fechaHoraFin = moment(`${cita.fecha} ${cita.hora_fin}`);
           let estado_visual = cita.estado;
 
           if (cita.estado === "confirmada" && fechaHoraFin.isBefore(ahora)) {
-            estado_visual = "pasado"; // gris
+            estado_visual = "pasado";
           }
 
           return { ...cita, estado_visual };
         });
 
-        // 5️⃣ Agregar semana con sus citas
+        // 🟩 MISMA estructura final que tu código original
         semanas.push({
-          semana_inicio: semanaInicio.format("YYYY-MM-DD"), // 🆕 String en lugar de Date
-          semana_fin: semanaFin.format("YYYY-MM-DD"),       // 🆕 String en lugar de Date
+          semana_inicio: semanaInicio.format("YYYY-MM-DD"),
+          semana_fin: semanaFin.format("YYYY-MM-DD"),
           citas: citasConEstado,
         });
       }
 
       return res.status(200).json({ id_psicologo, semanas });
+
     } catch (error) {
       console.error("❌ Error en getSemanasPorPaciente:", error);
       return res.status(500).json({
@@ -88,6 +99,7 @@ export const AgendaController = {
       });
     }
   },
+
 
   /* ========================================================
      📅 2️⃣ Obtener todas las semanas de un psicólogo específico
