@@ -22,7 +22,6 @@ import recursosRoutes from "./routes/recursos.routes.js";
 import evidenciasRoutes from "./routes/evidencia.routes.js";
 import { SocketController } from "./controllers/socketController.js";
 import actividadPacienteRoutes from "./routes/actividadPaciente.routes.js";
-import actividadPacienteUploadRoutes from "./routes/actividadPacienteUpload.routes.js";
 
 const app = express();
 
@@ -78,7 +77,7 @@ app.use("/api", recursosRoutes);
 app.use("/api", evidenciasRoutes);
 app.use("/api/notificaciones", notificacionesRoutes);
 app.use("/api/actividades-paciente", actividadPacienteRoutes);
-app.use("/api/upload-actividad", actividadPacienteUploadRoutes);
+
 
 // 🔍 Ruta de prueba rápida
 app.get("/api/ping", (req, res) => {
