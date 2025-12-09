@@ -6,8 +6,8 @@ const DiarioEmociones = {};
 // 🔹 Guardar una nueva emoción
 DiarioEmociones.create = async (id_paciente, emocion, nota, fecha) => {
   const [result] = await pool.query(
-    `INSERT INTO diario_emociones (id_paciente, emocion, nota, fecha)
-     VALUES (?, ?, ?, ?)`,
+    `INSERT INTO diario_emociones (id_paciente, emocion, nota, fecha, compartido)
+     VALUES (?, ?, ?, ?, 0)`,
     [id_paciente, emocion, nota, fecha]
   );
   return result.insertId;
@@ -16,7 +16,7 @@ DiarioEmociones.create = async (id_paciente, emocion, nota, fecha) => {
 // 🔹 Obtener emociones del mes actual SOLO del paciente indicado
 DiarioEmociones.findByPacienteAndMonth = async (id_paciente, year, month) => {
   const [rows] = await pool.query(
-    `SELECT id_diario, id_paciente, DATE(fecha) AS fecha, emocion, nota
+    `SELECT id_diario, id_paciente, DATE(fecha) AS fecha, emocion, nota, COALESCE(compartido, 0) as compartido
      FROM diario_emociones
      WHERE id_paciente = ?
        AND YEAR(DATE(fecha)) = ?
