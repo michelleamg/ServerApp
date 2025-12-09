@@ -62,4 +62,25 @@ export const DiarioEmocionesController = {
       });
     }
   },
+
+  async compartir(req, res) {
+    try {
+      const { id_diario } = req.params;
+
+      const [result] = await pool.query(
+        `UPDATE diario_emociones SET compartido = 1 WHERE id_diario = ?`,
+        [id_diario]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "No se encontró la entrada" });
+      }
+
+      return res.status(200).json({ message: "Entrada compartida con el psicólogo" });
+    } catch (error) {
+      console.error("❌ Error al compartir entrada:", error);
+      res.status(500).json({ message: "Error al compartir", error: error.message });
+    }
+  }
+
 };
